@@ -21,7 +21,7 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.5)
 
 # 加载自定义模块
 # Load custom modules
@@ -497,8 +497,11 @@ endif()
 ##############################################################################
 
 # for version.h
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
+                     D:/deps/opencv/include
+					 "D:/deps/libcuda/include"
+				#	D:/deps/ffmpeg-release-full-shared/ffmpeg-7.1.1-full_build-shared/include/
+)
 # for assert.h
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdpart)
 

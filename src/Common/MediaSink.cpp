@@ -11,7 +11,13 @@
 #include "MediaSink.h"
 #include "Common/config.h"
 #include "Extension/Factory.h"
-
+#include "Codec/cVideoDecoder.h"
+#include "Common/Parser.h"
+#include "Common/Stamp.h"
+#include "Common/MediaSource.h"
+#include "Network/Buffer.h"
+#include "Poller/EventPoller.h"
+#include "Common/ctranscode_info_mgr.h"
 #define MUTE_AUDIO_INDEX 0xFFFF
 
 using namespace std;
@@ -43,35 +49,100 @@ bool MediaSink::addTrack(const Track::Ptr &track_in) {
     }
     // 克隆Track，只拷贝其数据，不拷贝其数据转发关系  [AUTO-TRANSLATED:09edaa31]
     // Clone Track, only copy its data, not its data forwarding relationship
-    auto track = track_in->clone();
-    CHECK(track, "Clone track failed: ", track_in->getCodecName());
-    auto index = track->getIndex();
-    if (!_track_map.emplace(index, std::make_pair(track, false)).second) {
-        WarnL << "Already add a same track: " << track->getIndex() << ", codec: " << track->getCodecName();
-        return false;
+    // TODO@chensong 2025-07-04 编码数据参数
+    //auto track = track_in->clone();
+    Track::Ptr track = nullptr;
+    if (track_in->getTrackType() != TrackVideo)
+    {
+         track = track_in->clone();
+        // makeVideoTrack(Factory::getTrackByCodecId(codec_id), 0);
+        CHECK(track, "Clone track failed: ", track_in->getCodecName());
+        auto index = track->getIndex();
+        if (!_track_map.emplace(index, std::make_pair(track, false)).second) {
+            WarnL << "Already add a same track: " << track->getIndex() << ", codec: " << track->getCodecName();
+            return false;
+        }
+        _ticker.resetTime();
+        _audio_add = track->getTrackType() == TrackAudio ? true : _audio_add;
+        _track_ready_callback[index] = [this, track]() { onTrackReady(track); };
+
+        track->addDelegate([this](const Frame::Ptr& frame) {
+            if (_all_track_ready) {
+                return onTrackFrame(frame);
+            }
+            auto& frame_unread = _frame_unread[frame->getIndex()];
+
+            GET_CONFIG(uint32_t, kMaxUnreadyFrame, General::kUnreadyFrameCache);
+            if (frame_unread.size() > kMaxUnreadyFrame) {
+                // 未就绪的的track，不能缓存太多的帧，否则可能内存溢出  [AUTO-TRANSLATED:23958376]
+                // Unready tracks cannot cache too many frames, otherwise memory may overflow
+                frame_unread.clear();
+                WarnL << "Cached frame of unready track(" << frame->getCodecName() << ") is too much, now cleared";
+            }
+            // 还有Track未就绪，先缓存之  [AUTO-TRANSLATED:f96eadfa]
+            // There are still unready tracks, cache them first
+            frame_unread.emplace_back(Frame::getCacheAbleFrame(frame));
+            return true;
+            });
     }
-    _ticker.resetTime();
-    _audio_add = track->getTrackType() == TrackAudio ? true : _audio_add;
-    _track_ready_callback[index] = [this, track]() { onTrackReady(track); };
+    else
+    {
+        // Track::Ptr track = track_in->clone();
+         //Factory::getTrackByCodecId(CodecH265);
+      
 
-    track->addDelegate([this](const Frame::Ptr &frame) {
-        if (_all_track_ready) {
-            return onTrackFrame(frame);
-        }
-        auto &frame_unread = _frame_unread[frame->getIndex()];
+        if (_video_decoder)
+        {
+            //  const  dsp::ctranscode_info* transcode_ptr = dsp::ctranscode_info_mgr::Instance().find(_video_decoder->get_media());
+            track = Factory::getTrackByCodecId(_video_decoder->get_video_codec());
+            //if (transcode_ptr)
+            //{
+            //    track = Factory::getTrackByCodecId(transcode_ptr->get_codec());//track_in->getCodecId());
+            //}
+            //else
+            //{
+            //    track = track_in->clone();
+            //}
 
-        GET_CONFIG(uint32_t, kMaxUnreadyFrame, General::kUnreadyFrameCache);
-        if (frame_unread.size() > kMaxUnreadyFrame) {
-            // 未就绪的的track，不能缓存太多的帧，否则可能内存溢出  [AUTO-TRANSLATED:23958376]
-            // Unready tracks cannot cache too many frames, otherwise memory may overflow
-            frame_unread.clear();
-            WarnL << "Cached frame of unready track(" << frame->getCodecName() << ") is too much, now cleared";
         }
-        // 还有Track未就绪，先缓存之  [AUTO-TRANSLATED:f96eadfa]
-        // There are still unready tracks, cache them first
-        frame_unread.emplace_back(Frame::getCacheAbleFrame(frame));
-        return true;
-    });
+        else
+        {
+            track = track_in->clone();
+        }
+
+        // makeVideoTrack(Factory::getTrackByCodecId(codec_id), 0);
+        track->setIndex(track_in->getIndex());
+        CHECK(track, "Clone track failed: ", track_in->getCodecName());
+        auto index = track->getIndex();
+        if (!_track_map.emplace(index, std::make_pair(track, false)).second) {
+            WarnL << "Already add a same track: " << track->getIndex() << ", codec: " << track->getCodecName();
+            return false;
+        }
+        _ticker.resetTime();
+        _audio_add = track->getTrackType() == TrackAudio ? true : _audio_add;
+        _track_ready_callback[index] = [this, track]() { onTrackReady(track); };
+
+        track->addDelegate([this](const Frame::Ptr& frame) {
+            if (_all_track_ready) {
+                return onTrackFrame(frame);
+            }
+            auto& frame_unread = _frame_unread[frame->getIndex()];
+
+            GET_CONFIG(uint32_t, kMaxUnreadyFrame, General::kUnreadyFrameCache);
+            if (frame_unread.size() > kMaxUnreadyFrame) {
+                // 未就绪的的track，不能缓存太多的帧，否则可能内存溢出  [AUTO-TRANSLATED:23958376]
+                // Unready tracks cannot cache too many frames, otherwise memory may overflow
+                frame_unread.clear();
+                WarnL << "Cached frame of unready track(" << frame->getCodecName() << ") is too much, now cleared";
+            }
+            // 还有Track未就绪，先缓存之  [AUTO-TRANSLATED:f96eadfa]
+            // There are still unready tracks, cache them first
+            frame_unread.emplace_back(Frame::getCacheAbleFrame(frame));
+            return true;
+            });
+    }
+
+
     return true;
 }
 
@@ -86,12 +157,109 @@ void MediaSink::resetTracks() {
     _track_ready_callback.clear();
 }
 
+void MediaSink::set_media_transconde(const MediaTuple & tuple)
+{
+    const  dsp::ctranscode_info* transcode_ptr = dsp::ctranscode_info_mgr::Instance().find(tuple);
+    if (!transcode_ptr)
+    {
+        WarnL << "not find media " << tuple.shortUrl();
+
+    }
+    else 
+    {
+        InfoL << "find media " << tuple.shortUrl() << ", transcode_info = " << transcode_ptr->toString() ;
+            // getPoller();
+            // _poller = EventPollerPool::Instance().getPoller();
+            // _create_in_poller = _poller->isCurrentThread();
+            _video_decoder = std::make_shared</*chen::*/ cVideoDecoder>();
+            if (_video_decoder) {
+                _video_decoder->init(std::bind(&MediaSink::encode_frame, this, placeholders::_1), tuple);
+            }
+        m_transcode_info = *transcode_ptr;
+
+    }
+}
+
+void MediaSink::encode_frame(const Frame::Ptr& frame)
+{
+    std::shared_ptr<MediaSourceEvent> listener = _listener.lock();
+    toolkit::EventPoller::Ptr poller = nullptr;
+    if (!listener) {
+        // ErrorL << "media source event == nullptr !!!";
+        // return;
+        poller = toolkit::EventPollerPool::Instance().getPoller();
+    }
+    else {
+        // InfoL << "media source event == ok !!!";
+
+        try {
+            poller = listener->getOwnerPoller(MediaSource::NullMediaSource());
+            /*auto ret = listener->getOwnerPoller(sender);
+            if (ret != _poller) {
+                WarnL << "OwnerPoller changed " << _poller->getThreadName() << " -> " << ret->getThreadName() << " : " << shortUrl();
+                _poller = ret;
+                if (_paced_sender) {
+                    _paced_sender->resetTimer(_poller);
+                }
+            }*/
+
+        }
+        catch (MediaSourceEvent::NotImplemented&) {
+            // listener未重载getOwnerPoller  [AUTO-TRANSLATED:0ebf2e53]
+            // Listener did not reload getOwnerPoller
+            ErrorL << "media source event getOwnerPoller == nullptr !!!";
+            return;
+        }
+    }
+
+    // toolkit::EventPollerPool::Instance().getPoller();
+    if (poller) {
+        //  doStatistics(frame);
+          //   Frame::Ptr frame1 = frame;
+        poller->async([this, frame]() {
+            // bool ret = false;
+            //std::lock_guard<std::recursive_mutex> lck(_mtx);
+            //for (auto &pr : _delegates) {
+            //    if (pr.second->inputFrame(frame)) {
+            //        // ret = true;
+            //    }
+            //}
+            auto it = _track_map.find(frame->getIndex());
+            if (it == _track_map.end()) {
+                return;
+            }
+           // InfoL << "_count = " << _count << ", g_media_sink = " << g_media_sink_count;
+            // got frame 
+            it->second.second = true;
+            auto ret = it->second.first->inputFrame(frame);
+            if (_mute_audio_maker && frame->getTrackType() == TrackVideo) {
+                // 视频驱动产生静音音频  [AUTO-TRANSLATED:2a8c789c]
+                // Video driver generates silent audio
+                // TODO@chensong 2025-07-03 视频转音频的异常崩溃问题
+                _mute_audio_maker->inputFrame(frame);
+            }
+            checkTrackIfReady();
+            });
+    }
+}
+
+void MediaSink::setMediaListener(const std::weak_ptr<MediaSourceEvent>& listener)
+{
+    _listener = listener;
+}
+
 bool MediaSink::inputFrame(const Frame::Ptr &frame) {
     auto it = _track_map.find(frame->getIndex());
     if (it == _track_map.end()) {
         return false;
     }
     // got frame
+    if (frame->getTrackType() == TrackVideo && _video_decoder)
+    {
+        _video_decoder->push_frame(frame);
+
+        return true;
+    }
     it->second.second = true;
     auto ret = it->second.first->inputFrame(frame);
     if (_mute_audio_maker && frame->getTrackType() == TrackVideo) {

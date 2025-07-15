@@ -16,7 +16,7 @@
 #include "Util/TimeTicker.h"
 #include "Extension/Frame.h"
 #include "Extension/Track.h"
-
+#include "Common/ctranscode_info_mgr.h"
 namespace mediakit{
 
 class TrackListener {
@@ -81,9 +81,36 @@ private:
  
  * [AUTO-TRANSLATED:9e4f096b]
  */
+
+
+class cVideoDecoder;
+struct MediaTuple;
+class MediaSourceEvent;
 class MediaSink : public MediaSinkInterface, public TrackSource{
 public:
     using Ptr = std::shared_ptr<MediaSink>;
+
+    /**
+    * Author : chensong
+    * Date : 2025-07-14
+    *
+     * 输入frame
+     * @param frame
+     * Input frame
+     * @param frame
+
+     * [AUTO-TRANSLATED:7aaa5bba]
+     */
+    void set_media_transconde(const MediaTuple &tupel);
+
+
+
+
+    void encode_frame(const Frame::Ptr& frame);
+    void setMediaListener(const std::weak_ptr<MediaSourceEvent>& listener);
+    std::shared_ptr<cVideoDecoder> _video_decoder { nullptr };
+    dsp::ctranscode_info   m_transcode_info;
+    std::weak_ptr<MediaSourceEvent> _listener;
     /**
      * 输入frame
      * @param frame

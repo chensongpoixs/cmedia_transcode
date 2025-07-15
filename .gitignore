@@ -49,3 +49,7 @@
 /ios/
 /cmake-build-*
 /3rdpart/ZLToolKit/cmake-build-mq/
+/buildvs2019
+/buildvs2017
+/build
+/3rdpart/external-Windows/jemalloc-5.3.0.tar.bz2

@@ -48,6 +48,7 @@
 #include "Pusher/PusherProxy.h"
 #include "Rtp/RtpProcess.h"
 #include "Record/MP4Reader.h"
+#include "Common/ctranscode_info_mgr.h"
 
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
@@ -2317,6 +2318,150 @@ void installWebApi() {
         invoker(200, headerOut, val.toStyledString());
     });
 #endif
+
+
+
+    /*api_regist("/index/api/addStreamProxy", [](API_ARGS_MAP_ASYNC) {
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app", "stream", "url");
+
+        mINI args;
+        for (auto& pr : allArgs.args) {
+            args.emplace(pr.first, pr.second);
+        }
+
+        ProtocolOption option(allArgs);
+        auto retry_count = allArgs["retry_count"].empty() ? -1 : allArgs["retry_count"].as<int>();
+
+        std::string vhost = DEFAULT_VHOST;
+        if (!allArgs["vhost"].empty()) {
+            vhost = allArgs["vhost"];
+        }
+        auto tuple = MediaTuple{ vhost, allArgs["app"], allArgs["stream"], "" };
+        EventPollerPool::Instance().getPoller(false)->async([=]() mutable {
+            addStreamProxy(tuple,
+                allArgs["url"],
+                retry_count,
+                option,
+                allArgs["rtp_type"],
+                allArgs["timeout_sec"],
+                args,
+                [invoker, val, headerOut](const SockException& ex, const string& key) mutable {
+                    if (ex) {
+                        val["code"] = API::OtherFailed;
+                        val["msg"] = ex.what();
+                    }
+                    else {
+                        val["data"]["key"] = key;
+                    }
+                    invoker(200, headerOut, val.toStyledString());
+                });
+            });
+        });*/
+
+    api_regist("/index/api/set_transcode_info", [](API_ARGS_MAP_ASYNC) {
+        CHECK_SECRET();
+        CHECK_ARGS( "app", "stream");
+
+        mINI args;
+        for (auto& pr : allArgs.args) {
+            args.emplace(pr.first, pr.second);
+        }
+
+        ProtocolOption option(allArgs);
+        //auto retry_count = allArgs["retry_count"].empty() ? -1 : allArgs["retry_count"].as<int>();
+        dsp::ctranscode_info transcode_info;
+        int32_t  width = allArgs["out_width"].empty() ? 1920 : allArgs["out_width"].as<int>();
+        int32_t  height = allArgs["out_height"].empty() ? 1080 : allArgs["out_height"].as<int>();
+        int32_t  fps = allArgs["out_fps"].empty() ? 25 : allArgs["out_fps"].as<int>();
+        int32_t  codec = allArgs["out_codec"].empty() ? mediakit::CodecH264 : allArgs["out_codec"].as<int>();
+        int32_t  control_mode = allArgs["out_control_mode"].empty() ? 0 : allArgs["out_control_mode"].as<int>();
+        int32_t  profile = allArgs["out_profile"].empty() ? 0 : allArgs["out_profile"].as<int>();
+        int32_t  gop = allArgs["out_gop"].empty() ? 250 : allArgs["out_gop"].as<int>();
+        int32_t  i_qp = allArgs["out_i_qp"].empty() ? 26 : allArgs["out_i_qp"].as<int>();
+        int32_t  p_qp = allArgs["out_p_qp"].empty() ? 36 : allArgs["out_p_qp"].as<int>();
+        int32_t  average_bitrate = allArgs["out_average_bitrate"].empty() ? 300 : allArgs["out_average_bitrate"].as<int>();
+        int32_t  max_bitrate = allArgs["out_max_bitrate"].empty() ? 500 : allArgs["out_max_bitrate"].as<int>();
+        transcode_info.set_width(width);
+        transcode_info.set_height(height);
+        transcode_info.set_fps(fps);
+        transcode_info.set_codec((mediakit::CodecId)codec);
+        transcode_info.set_rate_controlmode(control_mode);
+        transcode_info.set_profile(profile);
+        transcode_info.set_gop(gop);
+        transcode_info.set_i_qp(i_qp);
+        transcode_info.set_p_qp(p_qp);
+        transcode_info.set_average_bitrate(average_bitrate);
+        transcode_info.set_max_bitrate(max_bitrate);
+
+        std::string vhost = DEFAULT_VHOST;
+        if (!allArgs["vhost"].empty()) {
+            vhost = allArgs["vhost"];
+        }
+        auto tuple = MediaTuple{ vhost, allArgs["app"], allArgs["stream"], "" };
+        EventPollerPool::Instance().getPoller(false)->async([=]() mutable {
+           bool ret =  dsp::ctranscode_info_mgr::Instance().save_transcode_info(tuple, transcode_info);
+            val["code"] = 0;
+            val["msg"] = /*ret ? "failed" :*/ "success";
+            invoker(200, headerOut, val.toStyledString());
+            /*addStreamProxy(tuple,
+                allArgs["url"],
+                retry_count,
+                option,
+                allArgs["rtp_type"],
+                allArgs["timeout_sec"],
+                args,
+                [invoker, val, headerOut](const SockException& ex, const string& key) mutable {
+                    if (ex) {
+                        val["code"] = API::OtherFailed;
+                        val["msg"] = ex.what();
+                    }
+                    else {
+                        val["data"]["key"] = key;
+                    }
+                    invoker(200, headerOut, val.toStyledString());
+                });*/
+
+            });
+    });
+
+    api_regist("/index/api/get_all_transcode_info", [](API_ARGS_MAP_ASYNC) {
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app", "stream", "url");
+
+        mINI args;
+        for (auto& pr : allArgs.args) {
+            args.emplace(pr.first, pr.second);
+        }
+
+        ProtocolOption option(allArgs);
+        auto retry_count = allArgs["retry_count"].empty() ? -1 : allArgs["retry_count"].as<int>();
+
+        std::string vhost = DEFAULT_VHOST;
+        if (!allArgs["vhost"].empty()) {
+            vhost = allArgs["vhost"];
+        }
+        auto tuple = MediaTuple{ vhost, allArgs["app"], allArgs["stream"], "" };
+        EventPollerPool::Instance().getPoller(false)->async([=]() mutable {
+            addStreamProxy(tuple,
+                allArgs["url"],
+                retry_count,
+                option,
+                allArgs["rtp_type"],
+                allArgs["timeout_sec"],
+                args,
+                [invoker, val, headerOut](const SockException& ex, const string& key) mutable {
+                    if (ex) {
+                        val["code"] = API::OtherFailed;
+                        val["msg"] = ex.what();
+                    }
+                    else {
+                        val["data"]["key"] = key;
+                    }
+                    invoker(200, headerOut, val.toStyledString());
+                });
+            });
+        });
 }
 
 void unInstallWebApi(){

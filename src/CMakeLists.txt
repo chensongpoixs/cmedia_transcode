@@ -53,7 +53,14 @@ target_compile_definitions(zlmediakit
 target_compile_options(zlmediakit
   PRIVATE ${COMPILE_OPTIONS_DEFAULT})
 target_link_libraries(zlmediakit
-  PUBLIC ${LINK_LIBRARIES})
+  PUBLIC ${LINK_LIBRARIES}
+    "D:/deps/libcuda/lib/x64/nvcuvid.lib"
+"D:/deps/libcuda/lib/x64/cuda.lib"
+"D:/deps/opencv/x64/vc16/lib/opencv_world4120d.lib"
+"D:/deps/opencv/x64/vc16/lib/opencv_img_hash4120d.lib"
+"D:/deps/libcuda/lib/x64/cudart.lib"
+"D:/deps/libcuda/lib/x64/nvencodeapi.lib"
+  )
 target_include_directories(zlmediakit
   PRIVATE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"

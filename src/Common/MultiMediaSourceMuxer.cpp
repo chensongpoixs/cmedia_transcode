@@ -203,7 +203,7 @@ MultiMediaSourceMuxer::MultiMediaSourceMuxer(const MediaTuple& tuple, float dur_
     _option = option;
     _dur_sec = dur_sec;
     setMaxTrackCount(option.max_track);
-
+    set_media_transconde(tuple);
     if (option.enable_rtmp) {
         _rtmp = std::make_shared<RtmpMediaSourceMuxer>(_tuple, option, std::make_shared<TitleMeta>(dur_sec));
     }
