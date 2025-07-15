@@ -59,7 +59,7 @@ namespace  dsp
 
         return true;
     }
-    bool ccuvid_video_render::internalGrab(cv::cuda::GpuMat& frame, cv::cuda::GpuMat& histogram, cudaStream_t stream)
+    bool ccuvid_video_render::internalGrab(cv::cuda::GpuMat& frame, int64_t& pts, cv::cuda::GpuMat& histogram, cudaStream_t stream)
     {
         if (m_video_parser->hasError())
         {
@@ -82,7 +82,7 @@ namespace  dsp
 
                 // map decoded video frame to CUDA surface
             cv::cuda::GpuMat decodedFrame = m_video_decoder->mapFrame(frameInfo.first.picture_index, frameInfo.second);
-
+            pts = frameInfo.first.timestamp;
             /*if (fmt.enableHistogram) {
                 const size_t histogramSz = 4 * fmt.nMaxHistogramBins;
                 histogram.create(1, fmt.nMaxHistogramBins, CV_32S);
@@ -188,14 +188,14 @@ namespace  dsp
             m_frame_queue->releaseFrame(frameInfo.first);
         }
     }
-    bool ccuvid_video_render::nextFrame(cv::cuda::GpuMat& frame, cv::cuda::GpuMat& histogram, cudaStream_t stream)
+    bool ccuvid_video_render::nextFrame(cv::cuda::GpuMat& frame, int64_t& pts, cv::cuda::GpuMat& histogram, cudaStream_t stream)
     {
         if (!m_init)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return false;
         }
-        if (!internalGrab(frame, histogram, stream))
+        if (!internalGrab(frame, pts, histogram, stream))
         {
             return false;
         }

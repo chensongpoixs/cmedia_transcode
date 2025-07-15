@@ -350,9 +350,15 @@ NVENCSTATUS NvEncoder::DoEncode(NV_ENC_INPUT_PTR inputBuffer, NV_ENC_OUTPUT_PTR 
     NV_ENC_PIC_PARAMS picParams = {};
     if (pPicParams)
     {
-        picParams = *pPicParams;
+        picParams.frameIdx = pPicParams->frameIdx;;
+        picParams.inputTimeStamp = pPicParams->inputTimeStamp;
     }
-    picParams.inputTimeStamp = m_iInputFrame++;
+    else
+    {
+        picParams.frameIdx = m_iInputFrame;
+    picParams.inputTimeStamp = m_iInputFrame;
+    }
+    m_iInputFrame++;
     picParams.version = NV_ENC_PIC_PARAMS_VER;
     picParams.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
     picParams.inputBuffer = inputBuffer;

@@ -42,6 +42,12 @@ namespace mediakit {
            // return;
         }
         m_transcode_info = *transcode_ptr;
+        int32_t fps = m_transcode_info.get_fps();
+        if (fps < 10)
+        {
+            fps = 25;
+        }
+        m_frame_samples = 90000 / 25;
         m_cuvid_video_render = std::make_shared<dsp::ccuvid_video_render>();
        // m_cuvid_video_render->init(cv::cudacodec::Codec::H264);
         m_encoder = std::make_shared<cVideoEncoder>();
@@ -137,14 +143,18 @@ namespace mediakit {
             int32_t packet_index = 0;
             for (const std::vector<uint8_t >& d : vPacket) 
             {
-               
+                if (d.size()  <5)
+                {
+                    continue;
+               }
                 if (m_transcode_info.get_codec() == mediakit::CodecId::CodecH265)
                 {
                     auto frame1 = /*mediakit::*/ FrameImp::create</*mediakit::*/ H265Frame>();
                     frame1->_prefix_size = 4;
-                    frame1->_dts = pts[packet_index];
-                   // printf("[pts = %llu]\n", pts[packet_index]); 
-                    frame1->_pts = pts[packet_index];
+                    frame1->_dts = pts[packet_index] /** m_frame_samples*/;
+                  //printf("[pts = %llu]\n", pts[packet_index]); 
+                //  InfoL << "[pts = "<< pts[packet_index] <<"]";
+                    frame1->_pts = pts[packet_index] /** m_frame_samples*/;
                     frame1->setIndex(0); 
                     ++packet_index; 
                     frame1->_buffer.append((const char*)&d[0], d.size());
@@ -155,15 +165,16 @@ namespace mediakit {
                 {
                     auto frame1 = /*mediakit::*/ FrameImp::create</*mediakit::*/ H264Frame>();
                     frame1->_prefix_size = 4;
-                    frame1->_dts = pts[packet_index];
-                   // printf("[pts = %llu]\n", pts[packet_index]);
+                    frame1->_dts = pts[packet_index] /** m_frame_samples*/;
+                   // InfoL << "[pts = " << pts[packet_index] << "]";
+                    // printf("[pts = %llu]\n", pts[packet_index]);
                     //frame->dts();
 
                     //packet_pts[packet_index];
                     //frame->dts();
 
                    // packet_pts[packet_index]; // //frame->dts();
-                    frame1->_pts = pts[packet_index];
+                    frame1->_pts = pts[packet_index] /** m_frame_samples*/;
                     frame1->setIndex(0);
                     //frame->dts();
                     //packet_pts[packet_index]; //
@@ -258,15 +269,16 @@ namespace mediakit {
         m_encoder->init(1920, 1080, m_transcode_info.get_fps(), m_transcode_info.get_codec());
         cv::cuda::GpuMat frame, tmp;
         cv::Mat frameHost, frameHostGs, frameFromDevice, unused;
+        int64_t pts = 0;
         while (!m_stoped)
         {
-            if (m_cuvid_video_render->nextFrame(frame, tmp, 0))
+            if (m_cuvid_video_render->nextFrame(frame, pts, tmp, 0))
             {
                // frame.channels();
                 frame.download(frameFromDevice);
                /* cv::imshow("====", frameFromDevice);
                 cv::waitKey(1);*/
-                m_encoder->encode(frameFromDevice, this);
+                m_encoder->encode(frameFromDevice, pts, this);
               //  frameFromDevice.release();
                 //frame.release();
             }

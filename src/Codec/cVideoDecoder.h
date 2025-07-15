@@ -136,6 +136,7 @@ namespace mediakit {
         // mediakit::CodecId     m_video_codec;
 
          dsp::ctranscode_info    m_transcode_info;
+         int64_t        m_frame_samples { 90000 / 25 };
           
 	};
 }

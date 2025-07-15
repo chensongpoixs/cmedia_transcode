@@ -14,6 +14,7 @@ purpose:		nv_cuda_ decoder
 #include "cVideoDecoder.h"
 #include "NvEncoderCuda.h"
 #include <opencv2/cudacodec.hpp>
+#include "cvideo_writer.h"
 namespace mediakit {
 
     class cVideoEncoder 
@@ -34,7 +35,7 @@ namespace mediakit {
             std::vector<uint64_t> &ptss /*AVFrame *frame*/ /*, std::shared_ptr<mediakit::FrameDispatcher> Interface*/);
     
     
-        void encode(const cv::Mat& frame,  cv::cudacodec::EncoderCallback * callback);
+        void encode(const cv::Mat& frame, int64_t pts,  cv::cudacodec::EncoderCallback * callback);
         void encode(const cv::cuda::GpuMat& frame, cv::cudacodec::EncoderCallback* callback);
     private:
       //  AVCodecContext *m_c ;
@@ -45,7 +46,7 @@ namespace mediakit {
           cv::cudacodec::Codec m_codec = cv::cudacodec::Codec::HEVC;
           double m_fps = 25;
           cv::cudacodec::ColorFormat writerColorFormat = cv::cudacodec::ColorFormat::RGBA;//cv::cudacodec::ColorFormat::RGBA;
-        std::shared_ptr <cv::cudacodec::VideoWriter> writer = nullptr;
+        std::shared_ptr <dsp::VideoWriterImpl> writer = nullptr;
         cv::cudacodec::EncoderParams encoder_params  ;
     };
 } // namespace chen

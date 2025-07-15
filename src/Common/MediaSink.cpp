@@ -484,8 +484,8 @@ bool MediaSink::addMuteAudioTrack() {
     audio->setExtraData(ADTS_CONFIG, 2);
     _track_map[MUTE_AUDIO_INDEX] = std::make_pair(audio, true);
     audio->addDelegate([this](const Frame::Ptr &frame) { return onTrackFrame(frame); });
-    _mute_audio_maker = std::make_shared<MuteAudioMaker>();
-    _mute_audio_maker->addDelegate([audio](const Frame::Ptr &frame) { return audio->inputFrame(frame); });
+  //  _mute_audio_maker = std::make_shared<MuteAudioMaker>();
+  //  _mute_audio_maker->addDelegate([audio](const Frame::Ptr &frame) { return audio->inputFrame(frame); });
     onTrackReady(audio);
     TraceL << "Mute aac track added";
     return true;

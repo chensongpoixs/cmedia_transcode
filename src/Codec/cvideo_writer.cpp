@@ -307,12 +307,23 @@ namespace dsp
                 false, 0/*cuda::StreamAccessor::getStream(stream)*/);
         }
     }
-
-    void VideoWriterImpl::write(const cv::InputArray frame) {
+    void VideoWriterImpl::write(const cv::InputArray frame ) 
+    {
         CV_Assert(frame.channels() == nSrcChannels);
         CopyToNvSurface(frame);
         std::vector<uint64_t> pts;
+      
         pEnc->EncodeFrame(vPacket, pts);
+        encoderCallback->onEncoded(vPacket, pts);
+    };
+    void VideoWriterImpl::write(const cv::InputArray frame, int64_t frame_pts) {
+        CV_Assert(frame.channels() == nSrcChannels);
+        CopyToNvSurface(frame);
+        std::vector<uint64_t> pts;
+        NV_ENC_PIC_PARAMS input_params;
+        input_params.inputTimeStamp = frame_pts;
+        input_params.frameIdx = frame_pts;
+        pEnc->EncodeFrame(vPacket, pts, &input_params);
         encoderCallback->onEncoded(vPacket, pts);
     };
 

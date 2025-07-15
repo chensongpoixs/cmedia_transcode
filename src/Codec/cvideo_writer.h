@@ -61,6 +61,7 @@ namespace  dsp
             const cv::cudacodec::ColorFormat colorFormat, const cv::cudacodec::EncoderParams& encoderParams, const cv::cuda::Stream& stream = cv::cuda::Stream::Null());
         ~VideoWriterImpl();
         void write(cv::InputArray frame);
+        void write(cv::InputArray frame, int64_t pts);
         cv::cudacodec::EncoderParams getEncoderParams() const;
         void release();
     private:

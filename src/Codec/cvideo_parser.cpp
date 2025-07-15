@@ -8,6 +8,7 @@ purpose:		nv_cuda_ decoder
  #include "cvideo_parser.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <nvcuvid.h>
 namespace dsp {
 #define max(x, y)   (x) > (y) ? (x) : (y)
 #define min(x, y)   (x) > (y)? (y): (x)

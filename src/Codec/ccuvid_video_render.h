@@ -49,10 +49,10 @@ namespace  dsp
         bool initd() const  { return m_init; }
     public:
 
-        bool internalGrab(cv::cuda::GpuMat& frame, cv::cuda::GpuMat& histogram, cudaStream_t stream = 0);
+        bool internalGrab(cv::cuda::GpuMat& frame, int64_t& pts, cv::cuda::GpuMat& histogram, cudaStream_t stream = 0);
         bool aquireFrameInfo(std::pair<CUVIDPARSERDISPINFO, CUVIDPROCPARAMS>& frameInfo, cudaStream_t stream = 0);
         void releaseFrameInfo(const std::pair<CUVIDPARSERDISPINFO, CUVIDPROCPARAMS>& frameInfo);
-        bool  nextFrame(cv::cuda::GpuMat& frame, cv::cuda::GpuMat& histogram, cudaStream_t stream);
+        bool  nextFrame(cv::cuda::GpuMat& frame, int64_t &pts, cv::cuda::GpuMat& histogram, cudaStream_t stream);
     private:
 
 

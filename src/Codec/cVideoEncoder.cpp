@@ -417,7 +417,7 @@ namespace mediakit {
    //    cv::cuda::Stream stream = cv::cuda::Stream::Null();
    //     return std::make_shared<dsp::VideoWriterImpl>(callback, frameSize, codec, fps, colorFormat, params, stream);
    // }
-    void cVideoEncoder::encode(const cv::Mat& frame, cv::cudacodec::EncoderCallback * callback)
+    void cVideoEncoder::encode(const cv::Mat& frame, int64_t pts, cv::cudacodec::EncoderCallback * callback)
     {
         if (!writer)
         {
@@ -427,7 +427,7 @@ namespace mediakit {
         }
 
        // frame.download(frameFromDevice);
-        writer->write(frame);
+        writer->write(frame, pts);
     }
     void cVideoEncoder::encode(const cv::cuda::GpuMat& frame, cv::cudacodec::EncoderCallback* callback)
     {
