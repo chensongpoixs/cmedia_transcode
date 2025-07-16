@@ -95,7 +95,8 @@ namespace  dsp
     {
         if (m_video_parser->hasError())
         {
-            printf("[%s][%d]\n", __FUNCTION__, __LINE__);
+            InfoL << " video parser error !!!";
+            //printf("[%s][%d]\n", __FUNCTION__, __LINE__);
         }
       //  InfoL << "";
         std::pair<CUVIDPARSERDISPINFO, CUVIDPROCPARAMS> frameInfo;
@@ -169,7 +170,8 @@ namespace  dsp
 
                 if (m_video_parser->hasError())
                 {
-                    printf("[%s][%d]\n", __FUNCTION__, __LINE__);
+                    WarnL << " video parser error !!!";
+                    //printf("[%s][%d]\n", __FUNCTION__, __LINE__);
                 }
 
                 if (m_frame_queue->isEndOfDecode())
@@ -179,7 +181,8 @@ namespace  dsp
 
                 // Wait a bit
                // Thread::sleep(1);
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                // TODO@chensong 2025-07-16    帧率 fps/s
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
 
             bool isProgressive = displayInfo.progressive_frame != 0;

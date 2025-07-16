@@ -61,6 +61,7 @@ namespace dsp {
         catch (const std::exception& e) {
             //CV_LOG_ERROR(NULL, e.msg);
             m_has_error = true;
+            WarnL << "cuvidParseVideoData exce  failed !!! " << e.what();
             m_frame_queue->endDecode();
            /* if (frame_queue_ptr)
             {
@@ -71,6 +72,7 @@ namespace dsp {
 
         if (retVal != CUDA_SUCCESS) {
             m_has_error = true;
+            WarnL << " cuvidParseVideoData failed ret = " << retVal;
            /* if (frame_queue_ptr)
             {
                 frame_queue_ptr->endDecode();
@@ -195,7 +197,8 @@ namespace dsp {
 
         if (!thiz->m_video_decder->decodePicture(picParams))
         {
-            printf("%s\n", "Decoding failed!");
+            WarnL << "decodePicture   failed !!! ";
+            //printf("%s\n", "Decoding failed!");
             thiz->m_has_error = true;
             return false;
         }

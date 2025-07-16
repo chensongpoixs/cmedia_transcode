@@ -327,11 +327,11 @@ namespace mediakit {
             {
                // InfoL << "";
                // frame.channels();
-                frame.download(frameFromDevice);
+              //  frame.download(frameFromDevice);
                /* cv::imshow("====", frameFromDevice);
                 cv::waitKey(1);*/
               //  InfoL << "";
-                m_encoder->encode(frameFromDevice, pts, this);
+                m_encoder->encode(frame, pts, this);
               //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();

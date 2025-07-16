@@ -62,13 +62,14 @@ namespace  dsp
         ~VideoWriterImpl();
         void write(cv::InputArray frame);
         void write(cv::InputArray frame, int64_t pts);
+        void write(const cv::cuda::GpuMat & frame, int64_t pts);
         cv::cudacodec::EncoderParams getEncoderParams() const;
         void release();
     private:
         void Init(const cv::cudacodec::Codec codec, const double fps, const cv::Size frameSz);
         void InitializeEncoder(const GUID codec, const double fps);
         void CopyToNvSurface(const  cv::InputArray src);
-
+        void CopyToNvSurface(const cv::cuda::GpuMat& src);
            cv::cudacodec::EncoderCallback * encoderCallback = nullptr;
         cv::cudacodec::ColorFormat colorFormat = cv::cudacodec::ColorFormat::UNDEFINED;
         NV_ENC_BUFFER_FORMAT surfaceFormat = NV_ENC_BUFFER_FORMAT::NV_ENC_BUFFER_FORMAT_UNDEFINED;

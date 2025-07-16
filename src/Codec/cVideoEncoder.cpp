@@ -438,7 +438,7 @@ namespace mediakit {
        // frame.download(frameFromDevice);
         writer->write(frame, pts);
     }
-    void cVideoEncoder::encode(const cv::cuda::GpuMat& frame, cv::cudacodec::EncoderCallback* callback)
+    void cVideoEncoder::encode(const cv::cuda::GpuMat& frame, int64_t pts, cv::cudacodec::EncoderCallback* callback)
     {
         if (!writer)
         {
@@ -448,7 +448,7 @@ namespace mediakit {
         }
 
         // frame.download(frameFromDevice);
-        writer->write(frame);
+        writer->write(frame, pts);
     }
 } // namespace chen
 

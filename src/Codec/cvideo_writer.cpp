@@ -310,6 +310,21 @@ namespace dsp
                 false, 0/*cuda::StreamAccessor::getStream(stream)*/);
         }
     }
+    void VideoWriterImpl::CopyToNvSurface(const cv::cuda::GpuMat& src)
+    {
+        const NvEncInputFrame* encoderInputFrame = pEnc->GetNextInputFrame();
+       /* CV_Assert(src.isGpuMat() || src.isMat());
+        if (CvFormat(colorFormat))
+        {
+            assert(src.size() == cv::Size(pEnc->GetEncodeWidth(), pEnc->GetEncodeHeight()));
+        }*/
+        unsigned char* /*Npp8u*/  dst = (unsigned char*/*Npp8u**/)encoderInputFrame->inputPtr;
+        void* srcPtr = src.data;
+        const CUmemorytype cuMemoryType =   CU_MEMORYTYPE_DEVICE  ;
+        NvEncoderCuda::CopyToDeviceFrame(cuContext, srcPtr, static_cast<unsigned>(src.step), (CUdeviceptr)encoderInputFrame->inputPtr, (int)encoderInputFrame->pitch, pEnc->GetEncodeWidth(),
+            pEnc->GetEncodeHeight(), cuMemoryType, encoderInputFrame->bufferFormat, encoderInputFrame->chromaOffsets, encoderInputFrame->numChromaPlanes,
+            false, 0/*cuda::StreamAccessor::getStream(stream)*/);
+    }
     void VideoWriterImpl::write(const cv::InputArray frame ) 
     {
         CV_Assert(frame.channels() == nSrcChannels);
@@ -332,7 +347,22 @@ namespace dsp
       //  InfoL << "";
         encoderCallback->onEncoded(vPacket, pts);
        // InfoL << "";
-    };
+    }
+    void VideoWriterImpl::write(const cv::cuda::GpuMat& frame, int64_t frame_pts)
+    {
+       // CV_Assert(frame.channels() == nSrcChannels);
+        CopyToNvSurface(frame);
+        // InfoL << "";
+        std::vector<uint64_t> pts;
+        NV_ENC_PIC_PARAMS input_params;
+        input_params.inputTimeStamp = frame_pts;
+        input_params.frameIdx = frame_pts;
+        // InfoL << "";
+        pEnc->EncodeFrame(vPacket, pts, &input_params);
+        //  InfoL << "";
+        encoderCallback->onEncoded(vPacket, pts);
+    }
+    
 
     cv::cudacodec::EncoderParams VideoWriterImpl::getEncoderParams() const {
         return encoderParams;

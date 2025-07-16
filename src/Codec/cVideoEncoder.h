@@ -37,7 +37,7 @@ namespace mediakit {
     
     
         void encode(const cv::Mat& frame, int64_t pts,  cv::cudacodec::EncoderCallback * callback);
-        void encode(const cv::cuda::GpuMat& frame, cv::cudacodec::EncoderCallback* callback);
+        void encode(const cv::cuda::GpuMat& frame, int64_t pts, cv::cudacodec::EncoderCallback* callback);
     private:
       //  AVCodecContext *m_c ;
 
