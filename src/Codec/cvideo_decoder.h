@@ -25,14 +25,14 @@ namespace  dsp
 	/*	: m_cuda_ctx(NULL)
 		, m_cuda_decoder(NULL)
 			, m_video_format({}) {}*/
-		virtual ~cvideo_decoder() {}
+		virtual ~cvideo_decoder();
 
 	public:
 		/*bool init(const cv::cudacodec::Codec & codec, const int32_t  minNumDecodeSufaces,
 			cv::Size targetsSz, cv::Rect  srcRoi, cv::Rect targetRoi, 
 			const bool enableHistogram, CUcontext ctx, CUvideoctxlock lock);*/
-
-
+		void destroy();
+	public:
 
         cudaVideoCodec codec() const { return static_cast<cudaVideoCodec>(m_video_format.codec); }
         int nDecodeSurfaces() const { return m_video_format.ulNumDecodeSurfaces; }

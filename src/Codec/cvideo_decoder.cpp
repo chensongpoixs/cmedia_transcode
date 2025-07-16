@@ -12,6 +12,7 @@ purpose:		nv_cuda_ decoder
 #include <cuda_runtime_api.h>
 #include "ccuda_define.h"
 #include <cuda_runtime.h>
+#include "Util/logger.h"
 namespace  dsp
 {
    
@@ -34,6 +35,16 @@ namespace  dsp
 		m_video_format.targetRoi.y = targetRoi.y - targetRoi.y % 2; m_video_format.targetRoi.height = targetRoi.height - targetRoi.height % 2;
 		//return true;
 	}
+      cvideo_decoder::~cvideo_decoder()
+      {
+          InfoL << "---> ";
+          destroy();
+      }
+      void cvideo_decoder::destroy()
+      {
+          InfoL << "---> ";
+          release();
+      }
 	cv::cuda::GpuMat cvideo_decoder::mapFrame(int picIdx, CUVIDPROCPARAMS& videoProcParams)
 	{
 		CUdeviceptr ptr;
@@ -47,7 +58,8 @@ namespace  dsp
 		}
 		const int height = (m_video_format.surfaceFormat == cudaVideoSurfaceFormat_NV12 || m_video_format.surfaceFormat == cudaVideoSurfaceFormat_P016) ? targetHeight() * 3 / 2 : targetHeight() * 3;
 		const int type = (m_video_format.surfaceFormat == cudaVideoSurfaceFormat_NV12 || m_video_format.surfaceFormat == cudaVideoSurfaceFormat_YUV444) ? CV_8U : CV_16U;
-		return cv::cuda::GpuMat(height, targetWidth(), type, (void*)ptr, pitch);
+      //  return cv::cuda::GpuMat(height, targetWidth(), type, (void*)ptr);
+        return cv::cuda::GpuMat(height, targetWidth(), type, (void*)ptr, pitch);
 	}
 
 	void cvideo_decoder::unmapFrame(cv::cuda::GpuMat& frame)
@@ -254,6 +266,7 @@ namespace  dsp
         if (!m_yuvConverter)
         {
             printf("[%s][%d]m_yuvConverter == nullptr \n", __FUNCTION__, __LINE__);
+            
             return;
         }
         m_yuvConverter->convert(decodedFrame, outFrame, surfaceFormat, colorFormat, bitDepth, planar, videoFullRangeFlag, stream);
@@ -314,7 +327,7 @@ namespace  dsp
         if (m_cuda_decoder)
         {
             cuvidDestroyDecoder(m_cuda_decoder);
-            m_cuda_decoder = 0;
+            m_cuda_decoder = nullptr;
         }
 	}
 	bool  cvideo_decoder::inited()

@@ -1,7 +1,14 @@
- 
+/***********************************************************************************************
+created: 		2025-06-15
 
-#ifndef OPENCV_NVENCODER_HPP
-#define OPENCV_NVENCODER_HPP
+author:			chensong
+
+purpose:		nv_cuda_ decoder
+************************************************************************************************/
+
+
+#ifndef C_NVENCODER_HPP
+#define C_NVENCODER_HPP
 #include <vector>
 #include "nvEncodeAPI.h"
 #include <stdint.h>

@@ -7,8 +7,8 @@ purpose:		nv_cuda_ decoder
 ************************************************************************************************/
 #include "ccuvid_video_render.h"
 #include "ccuda_define.h"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+//#include <opencv2/imgproc.hpp>
+//#include <opencv2/highgui.hpp>
 namespace  dsp
 {
 	bool ccuvid_video_render::init(cv::cudacodec::Codec codec)
@@ -46,18 +46,50 @@ namespace  dsp
 
 
 
-        m_init = true;
+        m_init.store(true);
 
        // m_renader_thread = std::thread(&ccuvid_video_render::_render_thread, this);
 		return true;
 	}
+    void ccuvid_video_render::destroy()
+    {
+        InfoL << "--->";
+        m_init.store(false);
+        
+        if (m_video_decoder)
+        {
+            m_video_decoder->destroy();
+        }
+        if (m_video_parser)
+        {
+            m_video_parser->destroy();
+        }
+        if (m_cuda_ctx)
+        {
+            cudaSafeCall(cuvidCtxLockDestroy(m_cuda_lock));
+            m_cuda_lock = nullptr;
+            cudaSafeCall(cuCtxDestroy(m_cuda_ctx));
+            m_cuda_ctx = nullptr;
+       }
+        
+    }
     bool ccuvid_video_render::parseVideoData(const unsigned char* data, size_t size, int64_t timestamp, const bool containsKeyFrame)
     {
-
-
+        if (!m_init)
+        {
+            WarnL << "parse Video Data  not init !!!";
+            return false;
+        }
         m_video_parser->parseVideoData(data, size, timestamp, false, containsKeyFrame, false);
 
         return true;
+    }
+    void ccuvid_video_render::frame_end_queue()
+    {
+        if (m_frame_queue)
+        {
+            m_frame_queue->endDecode();
+        }
     }
     bool ccuvid_video_render::internalGrab(cv::cuda::GpuMat& frame, int64_t& pts, cv::cuda::GpuMat& histogram, cudaStream_t stream)
     {
@@ -65,13 +97,13 @@ namespace  dsp
         {
             printf("[%s][%d]\n", __FUNCTION__, __LINE__);
         }
-
+      //  InfoL << "";
         std::pair<CUVIDPARSERDISPINFO, CUVIDPROCPARAMS> frameInfo;
         if (!aquireFrameInfo(frameInfo, stream))
         {
             return false;
         }
-
+       // InfoL << "";
         {
             VideoCtxAutoLock autoLock(m_cuda_lock);
 
@@ -96,7 +128,7 @@ namespace  dsp
               static uint8_t* uv_data = NULL;*/
 
               //decodedFrame.download(&y_data, &uv_data);
-
+        //    InfoL << "";
              // cudaSafeCall(cuCtxPopCurrent(NULL));
               //static FILE* out_file_ptr = ::fopen("test.yuv", "wb+");
              /* if (y_data)
@@ -113,10 +145,12 @@ namespace  dsp
              cv::waitKey(1);*/
              // unmap video frame
              // unmapFrame() synchronizes with the VideoDecode API (ensures the frame has finished decoding)
+         //   InfoL << "";
             m_video_decoder->unmapFrame(decodedFrame);
         }
-
+      //  InfoL << "";
         releaseFrameInfo(frameInfo);
+     //   InfoL << "";
         m_iFrame++;
         return true;
     }
@@ -192,13 +226,14 @@ namespace  dsp
     {
         if (!m_init)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+           // std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return false;
         }
         if (!internalGrab(frame, pts, histogram, stream))
         {
             return false;
         }
+      //  InfoL << "";
         return true;
     }
    /* void ccuvid_video_render::_render_thread()

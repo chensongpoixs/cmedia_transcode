@@ -38,15 +38,22 @@ namespace  dsp
 	{
 	public:
         ccuvid_video_render(){}
-        virtual ~ccuvid_video_render(){}
+        virtual ~ccuvid_video_render() { destroy(); }
 
     public:
         bool init(cv::cudacodec::Codec codec);
 
 
-        bool parseVideoData(const unsigned char* data, size_t size, int64_t timestamp, const bool containsKeyFrame);
+        void destroy();
 
         bool initd() const  { return m_init; }
+
+    public:
+        bool parseVideoData(const unsigned char* data, size_t size, int64_t timestamp, const bool containsKeyFrame);
+
+
+
+        void frame_end_queue();
     public:
 
         bool internalGrab(cv::cuda::GpuMat& frame, int64_t& pts, cv::cuda::GpuMat& histogram, cudaStream_t stream = 0);
@@ -86,7 +93,7 @@ namespace  dsp
         std::thread    m_renader_thread;
 
         //std::shared_ptr<cv::cudacodec::NVSurfaceToColorConverter> m_yuvConverter = 0;
-        bool      m_init = false;
+        std::atomic_bool      m_init = false;
 	};
 }
 

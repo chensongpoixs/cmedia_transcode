@@ -1,8 +1,16 @@
  
- 
+/***********************************************************************************************
+created: 		2025-06-15
+
+author:			chensong
+
+purpose:		nv_cuda_ decoder
+************************************************************************************************/
+
  
 #include "NvEncoderCuda.h"
 #include "ccuda_define.h"
+#include "Util/logger.h"
  
 NvEncoderCuda::NvEncoderCuda(CUcontext cuContext, uint32_t nWidth, uint32_t nHeight, NV_ENC_BUFFER_FORMAT eBufferFormat,
     uint32_t nExtraOutputDelay) :
@@ -22,6 +30,7 @@ NvEncoderCuda::NvEncoderCuda(CUcontext cuContext, uint32_t nWidth, uint32_t nHei
 
 NvEncoderCuda::~NvEncoderCuda()
 {
+    InfoL << "---->";
     ReleaseCudaResources();
 }
 

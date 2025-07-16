@@ -15,6 +15,7 @@ purpose:		nv_cuda_ decoder
 #include "cvideo_decoder.h"
 #include "cframe_queue.h"
 #include "ccuda_define.h"
+#include "Util/logger.h"
 namespace  dsp
 {
 	class  cvideo_parser 
@@ -31,13 +32,21 @@ namespace  dsp
 		, m_video_decder(videoDecoder)
 		, m_frame_queue(frameQueue)
 		, m_parser(NULL){
-			if (udpSource) {
+			
+			/*std::shared_ptr< cvideo_decoder> video_decoder_ptr = m_video_decder.lock();
+			if (!video_decoder_ptr)
+			{
+				WarnL << " video decoder ptr ==  nullptr !!!";
+			}*/
+			if (udpSource) 
+			{
 				m_max_unparsed_packets = 0;
 			}
 			CUVIDPARSERPARAMS params;
 			std::memset(&params, 0, sizeof(CUVIDPARSERPARAMS));
 
-			params.CodecType = videoDecoder->codec();
+			params.CodecType = m_video_decder->codec();
+			
 			params.ulMaxNumDecodeSurfaces = 1;
 			params.ulMaxDisplayDelay = 1; // this flag is needed so the parser will push frames out to the decoder as quickly as it can
 			params.pUserData = this;
@@ -47,9 +56,10 @@ namespace  dsp
 
 			cudaSafeCall(cuvidCreateVideoParser(&m_parser, &params));
 		}
-        virtual ~cvideo_parser() {}
+		virtual ~cvideo_parser();
 
-
+	public:
+		void destroy();
 		
 	public:
 		bool parseVideoData(const unsigned char* data, size_t size, int64_t timestamp, const bool rawMode, const bool containsKeyFrame, bool endOfStream);

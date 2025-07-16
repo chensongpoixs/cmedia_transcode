@@ -39,11 +39,15 @@ namespace  dsp
                 , m_display_queue()
                 , m_max_size(0)
                 , m_rawpacket_queue(){ }
-           virtual ~cframe_queue() {}
+            virtual ~cframe_queue();
 
 
         public:
            bool init(const int32_t max_size);
+
+           void destroy();
+    public:
+
            bool resize(const int32_t new_size);
            void endDecode() { m_endof_decode = true; }
            bool isEndOfDecode() const { return m_endof_decode != 0; }

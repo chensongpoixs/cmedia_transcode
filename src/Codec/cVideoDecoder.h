@@ -74,10 +74,17 @@ namespace mediakit {
              , m_media()
              , m_transcode_info()
         {}
-        virtual ~cVideoDecoder() {}
+         virtual ~cVideoDecoder();
 
 	public:
         bool init(DISPATHFRAME  callback/*std::shared_ptr< FrameDispatcher> ptr*/, const  MediaTuple  & media);
+
+
+
+        void stop();
+        void destroy();
+    public:
+
         //void push();
         void push_frame(/*const char *data, int32_t size*/ const std::shared_ptr<Frame> &frame);
 

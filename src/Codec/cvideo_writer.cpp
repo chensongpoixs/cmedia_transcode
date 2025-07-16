@@ -11,6 +11,7 @@ purpose:		nv_cuda_ decoder
 #include <fstream>
 #include <cassert>
 #include <opencv2/cudaimgproc.hpp>
+#include "Util/logger.h"
 namespace dsp
 {
     NV_ENC_BUFFER_FORMAT EncBufferFormat(const cv::cudacodec::ColorFormat colorFormat) {
@@ -177,7 +178,9 @@ namespace dsp
         encoderCallback->onEncodingFinished();
     }
 
-    VideoWriterImpl::~VideoWriterImpl() {
+    VideoWriterImpl::~VideoWriterImpl() 
+    {
+        InfoL << "---->";
         release();
     }
 
@@ -319,12 +322,16 @@ namespace dsp
     void VideoWriterImpl::write(const cv::InputArray frame, int64_t frame_pts) {
         CV_Assert(frame.channels() == nSrcChannels);
         CopyToNvSurface(frame);
+       // InfoL << "";
         std::vector<uint64_t> pts;
         NV_ENC_PIC_PARAMS input_params;
         input_params.inputTimeStamp = frame_pts;
         input_params.frameIdx = frame_pts;
+       // InfoL << "";
         pEnc->EncodeFrame(vPacket, pts, &input_params);
+      //  InfoL << "";
         encoderCallback->onEncoded(vPacket, pts);
+       // InfoL << "";
     };
 
     cv::cudacodec::EncoderParams VideoWriterImpl::getEncoderParams() const {

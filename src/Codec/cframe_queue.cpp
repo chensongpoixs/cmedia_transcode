@@ -6,7 +6,7 @@ author:			chensong
 purpose:		nv_cuda_ decoder
 ************************************************************************************************/
 #include "cframe_queue.h"
-
+#include "Util/logger.h"
 namespace  dsp
 {
 	RawPacket::RawPacket(const unsigned char* data_, const size_t size, const bool containsKeyFrame_) :
@@ -14,18 +14,32 @@ namespace  dsp
 
 	 
 
-	bool cframe_queue::init(const int32_t max_size) 
+	cframe_queue::~cframe_queue()
+	{
+		InfoL << "--->";
+	}
+
+	bool cframe_queue::init(const int32_t max_size)
 	{
 		std::lock_guard<std::mutex> lock(m_lock);
-    if (m_is_frame_in_use) 
-	{
-		return false;
+		if (m_is_frame_in_use) 
+		{
+			return false;
+		}
+		m_max_size = max_size;
+		m_display_queue = std::vector<CUVIDPARSERDISPINFO>(m_max_size, CUVIDPARSERDISPINFO());
+		m_is_frame_in_use = new volatile int[m_max_size];
+		std::memset((void*)m_is_frame_in_use, 0, sizeof(*m_is_frame_in_use) * m_max_size);
 	}
-    m_max_size = max_size;
-    m_display_queue = std::vector<CUVIDPARSERDISPINFO>(m_max_size, CUVIDPARSERDISPINFO());
-	m_is_frame_in_use = new volatile int[m_max_size];
-    std::memset((void*)m_is_frame_in_use, 0, sizeof(*m_is_frame_in_use) * m_max_size);
-}
+	void cframe_queue::destroy()
+	{
+		if (m_is_frame_in_use)
+		{
+			delete[] m_is_frame_in_use;
+		}
+		m_display_queue.clear();
+		m_max_size = 0;
+	}
 	bool cframe_queue::resize(const int32_t new_size) 
 	{
 		if (new_size == m_max_size)
@@ -70,6 +84,7 @@ namespace  dsp
 			{
 				return false;
 			}
+
 		}
 
 		return true;

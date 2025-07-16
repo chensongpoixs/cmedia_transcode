@@ -16,7 +16,11 @@ purpose:		nv_cuda_ decoder
 #include "cvideo_writer.h"
  
 namespace mediakit {
-	bool cVideoEncoder::init(int32_t width, int32_t height, int32_t fps, const mediakit::CodecId& codec)
+    cVideoEncoder::~cVideoEncoder()
+    {
+        InfoL << "----> ";
+    }
+    bool cVideoEncoder::init(int32_t width, int32_t height, int32_t fps, const mediakit::CodecId& codec)
 	{
 
       //  encoder_params.nvPreset = cv::cudacodec::EncodePreset::ENC_PRESET_P5;
@@ -322,6 +326,10 @@ namespace mediakit {
 		return true;
 	}
 
+    void cVideoEncoder::destroy()
+    {
+    }
+
 
     void cVideoEncoder::encode(
         const uint8_t *data, int32_t size, int64_t pts, std::vector<std::vector<uint8_t>> &vPacket,
@@ -419,13 +427,14 @@ namespace mediakit {
    // }
     void cVideoEncoder::encode(const cv::Mat& frame, int64_t pts, cv::cudacodec::EncoderCallback * callback)
     {
+       // InfoL << "";
         if (!writer)
         {
             cv::cuda::Stream stream = cv::cuda::Stream::Null();
             writer = std::make_shared<dsp::VideoWriterImpl>(callback, frame.size(), m_codec, m_fps, writerColorFormat, encoder_params, stream);
              // writer =   cv::cudacodec::__createVideoWriter(callback, frame.size(), codec, fps, writerColorFormat, encoder_params);
         }
-
+      //  InfoL << "";
        // frame.download(frameFromDevice);
         writer->write(frame, pts);
     }

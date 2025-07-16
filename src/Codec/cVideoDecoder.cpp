@@ -29,7 +29,12 @@ namespace mediakit {
 //cVideoDecoder::~cVideoDecoder() {}
 
     static int32_t g_video_decoder_count = 0;
-	bool cVideoDecoder::init(DISPATHFRAME callback /*std::shared_ptr<FrameDispatcher> ptr*/,  const  MediaTuple&   media)
+    cVideoDecoder::~cVideoDecoder()
+    {
+        InfoL << "--->" << ", count =" << m_count << ", transcode_info =" << m_transcode_info.toString();
+        destroy();
+    }
+    bool cVideoDecoder::init(DISPATHFRAME callback /*std::shared_ptr<FrameDispatcher> ptr*/,  const  MediaTuple&   media)
 	{
         m_count = ++g_video_decoder_count;
 
@@ -110,6 +115,48 @@ namespace mediakit {
 		return true;
     }
 
+    void cVideoDecoder::stop()
+    {
+        m_stoped.store(true);
+        
+        m_condition.notify_all();
+        if (m_cuvid_video_render)
+        {
+            m_cuvid_video_render->frame_end_queue();
+        }
+    }
+
+    void cVideoDecoder::destroy()
+    {
+        stop();
+        InfoL << " thread join able ...";
+        if (m_thread.joinable())
+        {
+            m_thread.join();
+        }
+        InfoL << " thread join able  thread exit ..";
+        if (m_encoder_thread.joinable())
+        {
+            m_encoder_thread.join();
+        }
+        InfoL << " thread join able encoder exit end OK !!!";
+
+        m_packet_queue.clear();
+
+        InfoL <<   "cuvid video render destroy !!!";
+        if (m_cuvid_video_render)
+        {
+            m_cuvid_video_render->destroy();
+
+        }
+        InfoL << "cuvid video render destroy OK !!!";
+        if (m_encoder)
+        {
+            m_encoder->destroy();
+        }
+        InfoL << "cuvid video encoder  destroy OK !!!";
+    }
+
     void cVideoDecoder::push_frame(/*const char *  data, int32_t size*/ const std::shared_ptr<Frame> &frame)
     {
     
@@ -138,7 +185,7 @@ namespace mediakit {
 
     void cVideoDecoder::onEncoded(const std::vector<std::vector<uint8_t>>& vPacket, const std::vector<uint64_t>& pts)
     {
-        if (m_frame_callback)
+        if (m_frame_callback && !m_stoped)
         {
             int32_t packet_index = 0;
             for (const std::vector<uint8_t >& d : vPacket) 
@@ -147,6 +194,10 @@ namespace mediakit {
                 {
                     continue;
                }
+                if (m_stoped)
+                {
+                    break;
+                }
                 if (m_transcode_info.get_codec() == mediakit::CodecId::CodecH265)
                 {
                     auto frame1 = /*mediakit::*/ FrameImp::create</*mediakit::*/ H265Frame>();
@@ -274,16 +325,25 @@ namespace mediakit {
         {
             if (m_cuvid_video_render->nextFrame(frame, pts, tmp, 0))
             {
+               // InfoL << "";
                // frame.channels();
                 frame.download(frameFromDevice);
                /* cv::imshow("====", frameFromDevice);
                 cv::waitKey(1);*/
+              //  InfoL << "";
                 m_encoder->encode(frameFromDevice, pts, this);
+              //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();
             }
-
+            else if (!m_stoped)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+            //InfoL << "";
         }
+
+        InfoL << "encoder work  thread exit !!!";
     }
     void cVideoDecoder::_handler_packet_item(std::shared_ptr<Frame> &frame) 
     {

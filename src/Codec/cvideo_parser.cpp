@@ -6,14 +6,34 @@ author:			chensong
 purpose:		nv_cuda_ decoder
 ************************************************************************************************/
  #include "cvideo_parser.h"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+//#include <opencv2/imgproc.hpp>
+//#include <opencv2/highgui.hpp>
 #include <nvcuvid.h>
+#include "Util/logger.h"
 namespace dsp {
 #define max(x, y)   (x) > (y) ? (x) : (y)
 #define min(x, y)   (x) > (y)? (y): (x)
 
-	bool cvideo_parser::parseVideoData(const unsigned char* data, size_t size, int64_t timestamp,  const bool rawMode, const bool containsKeyFrame, bool endOfStream)
+    cvideo_parser::~cvideo_parser()
+    {
+        InfoL << "--->";
+    }
+
+    void cvideo_parser::destroy()
+    {
+        InfoL << "--->";
+        if (m_parser)
+        {
+            cuvidDestroyVideoParser(m_parser);
+            m_parser = nullptr;
+        }
+        /*if (m_current_frame_packets.size() > 0)
+        {
+            m_current_frame_packets.clear();
+        }*/
+    }
+
+    bool cvideo_parser::parseVideoData(const unsigned char* data, size_t size, int64_t timestamp,  const bool rawMode, const bool containsKeyFrame, bool endOfStream)
 	{
         CUVIDSOURCEDATAPACKET packet;
         std::memset(&packet, 0, sizeof(CUVIDSOURCEDATAPACKET));
@@ -33,6 +53,8 @@ namespace dsp {
         }
 
         CUresult retVal = CUDA_SUCCESS;
+
+       // std::shared_ptr<cframe_queue>  frame_queue_ptr =   m_frame_queue.lock();
         try {
             retVal = cuvidParseVideoData(m_parser, &packet);
         }
@@ -40,21 +62,33 @@ namespace dsp {
             //CV_LOG_ERROR(NULL, e.msg);
             m_has_error = true;
             m_frame_queue->endDecode();
+           /* if (frame_queue_ptr)
+            {
+                frame_queue_ptr->endDecode();
+            }*/
             return false;
         }
 
         if (retVal != CUDA_SUCCESS) {
             m_has_error = true;
-            m_frame_queue->endDecode();
+           /* if (frame_queue_ptr)
+            {
+                frame_queue_ptr->endDecode();
+            }*/
+            m_frame_queue->endDecode();;
             return false;
         }
         //return true;
         ++m_unparse_pakcets;
         if (m_max_unparsed_packets && m_unparse_pakcets > m_max_unparsed_packets)
         {
-            printf("Maxium number of packets ( %u) parsed without decoding a frame or reconfiguring the decoder, if reading from \
-            a live source consider initializing with VideoReaderInitParams::udpSource == true.", m_max_unparsed_packets);
+            WarnL << "Maxium number of packets ( "<< m_max_unparsed_packets <<") parsed without decoding a frame or reconfiguring the decoder, if reading from \
+            a live source consider initializing with VideoReaderInitParams::udpSource == true.";
             m_has_error = true;
+            /*if (frame_queue_ptr)
+            {
+                frame_queue_ptr->endDecode();
+            }*/
             m_frame_queue->endDecode();
             return false;
         }
@@ -62,9 +96,19 @@ namespace dsp {
         if (endOfStream)
         {
             m_frame_queue->endDecode();
+           /* if (frame_queue_ptr)
+            {
+                frame_queue_ptr->endDecode();
+            }*/
         }
-
         return !m_frame_queue->isEndOfDecode();
+        /*if (frame_queue_ptr)
+        {
+            return !frame_queue_ptr->isEndOfDecode();
+        }*/
+        //WarnL << " frame queue ptr == nullptr !!!";
+        //return false;
+        //return !m_frame_queue->isEndOfDecode();
 	}
 	int CUDAAPI cvideo_parser::HandleVideoSequence(void* pUserData, CUVIDEOFORMAT* format)
 	{

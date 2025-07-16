@@ -24,12 +24,13 @@ namespace mediakit {
     public:
             cVideoEncoder()
         : m_encoder (NULL){}
-        virtual ~cVideoEncoder() {}
+            virtual ~cVideoEncoder();
 
     public:
         bool init(  int32_t width, int32_t   height , int32_t fps , const mediakit::CodecId& codec = mediakit::CodecH264 );
 
-
+        void destroy();
+    public:
         void encode(
             const uint8_t *data, int32_t size, int64_t pts, std::vector<std::vector<uint8_t>> &vPacket,
             std::vector<uint64_t> &ptss /*AVFrame *frame*/ /*, std::shared_ptr<mediakit::FrameDispatcher> Interface*/);
