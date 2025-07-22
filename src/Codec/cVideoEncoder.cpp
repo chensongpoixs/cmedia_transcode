@@ -325,6 +325,59 @@ namespace mediakit {
 
 		return true;
 	}
+     static const int32_t DEFAULT_BIT = 1000;
+    bool cVideoEncoder::init(const dsp::ctranscode_info& info)
+    {
+        encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS;
+       // encoder_params.encodingProfile = cv::cudacodec::EncodeProfile::ENC_H264_PROFILE_MAIN;
+        encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS;
+       encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_CONSTQP;
+        encoder_params.videoFullRangeFlag = true;
+        // encoder_params.constQp = {28, 31, 25};
+        /* encoder_params.averageBitRate = 8000 * 1000;
+         encoder_params.maxBitRate = 10000 * 1000;*/
+         //  encoder_params.multiPassEncoding = cv::cudacodec::EncodeMultiPass::ENC_TWO_PASS_FULL_RESOLUTION;
+         //  encoder_params.videoFullRangeFlag = true;
+       
+        encoder_params.averageBitRate = info.get_average_bitrate() * DEFAULT_BIT;
+        encoder_params.maxBitRate = info.get_max_bitrate() * DEFAULT_BIT;
+        encoder_params.gopLength = info.get_gop();
+        encoder_params.idrPeriod = info.get_gop();
+      /*  encoder_params.constQp.qpInterB = info.get_p_qp();
+        encoder_params.constQp.qpInterP = info.get_p_qp();
+        encoder_params.constQp.qpIntra = info.get_i_qp();*/
+        m_fps = info.get_fps();
+        if (info.get_codec() == mediakit::CodecH264)
+        {
+            m_codec = cv::cudacodec::Codec::H264;
+        }
+        else if (info.get_codec() == mediakit::CodecH265)
+        {
+            m_codec = cv::cudacodec::Codec::HEVC;
+        }
+        else
+        {
+            m_codec = cv::cudacodec::Codec::H264;
+        }
+
+
+        if (info.get_rate_controlmode() == 0)
+        {
+            encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_CONSTQP;
+        }
+        else if (info.get_rate_controlmode() == 1)
+        {
+            encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_VBR;
+        }
+        else if (info.get_rate_controlmode() == 2)
+        {
+            encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_CBR;
+        }
+
+
+        return true;
+        return false;
+    }
 
     void cVideoEncoder::destroy()
     {

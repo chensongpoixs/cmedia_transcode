@@ -15,6 +15,7 @@ purpose:		nv_cuda_ decoder
 #include "NvEncoderCuda.h"
 #include <opencv2/cudacodec.hpp>
 #include "cvideo_writer.h"
+
 namespace mediakit {
 
     class cVideoEncoder 
@@ -28,7 +29,7 @@ namespace mediakit {
 
     public:
         bool init(  int32_t width, int32_t   height , int32_t fps , const mediakit::CodecId& codec = mediakit::CodecH264 );
-
+        bool init(const dsp::ctranscode_info& info);
         void destroy();
     public:
         void encode(

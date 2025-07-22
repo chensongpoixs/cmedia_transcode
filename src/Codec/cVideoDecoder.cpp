@@ -185,6 +185,7 @@ namespace mediakit {
 
     void cVideoDecoder::onEncoded(const std::vector<std::vector<uint8_t>>& vPacket, const std::vector<uint64_t>& pts)
     {
+        static FILE* out_file_ptr = NULL;
         if (m_frame_callback && !m_stoped)
         {
             int32_t packet_index = 0;
@@ -198,6 +199,12 @@ namespace mediakit {
                 {
                     break;
                 }
+                if (!out_file_ptr)
+                {
+                    out_file_ptr = fopen("test____dd.h264", "wb+");
+                }
+                fwrite(&d[0], d.size(), 1, out_file_ptr);
+                fflush(out_file_ptr);
                 if (m_transcode_info.get_codec() == mediakit::CodecId::CodecH265)
                 {
                     auto frame1 = /*mediakit::*/ FrameImp::create</*mediakit::*/ H265Frame>();
@@ -317,28 +324,45 @@ namespace mediakit {
     {
 
        
-        m_encoder->init(1920, 1080, m_transcode_info.get_fps(), m_transcode_info.get_codec());
+       // m_encoder->init(1920, 1080, m_transcode_info.get_fps(), m_transcode_info.get_codec());
+        m_encoder->init(m_transcode_info);
         cv::cuda::GpuMat frame, tmp;
         cv::Mat frameHost, frameHostGs, frameFromDevice, unused;
         int64_t pts = 0;
+
+
+        uint64_t   frame_ms = (1000 ) / m_transcode_info.get_fps();
         while (!m_stoped)
         {
+            std::chrono::milliseconds pre_mils = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch());
+          
             if (m_cuvid_video_render->nextFrame(frame, pts, tmp, 0))
             {
                // InfoL << "";
                // frame.channels();
-              //  frame.download(frameFromDevice);
-               /* cv::imshow("====", frameFromDevice);
-                cv::waitKey(1);*/
+            /*  frame.download(frameFromDevice);
+               cv::imshow("====", frameFromDevice);
+               frameFromDevice.release();
+                cv::waitKey(1); */
               //  InfoL << "";
                 m_encoder->encode(frame, pts, this);
+               
+                
               //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();
             }
-            else if (!m_stoped)
+            /*else if (!m_stoped)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }*/
+            std::chrono::milliseconds cur_mils = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch());
+            std::chrono::milliseconds diff_mils = cur_mils - pre_mils;
+            if (diff_mils.count() < frame_ms)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(frame_ms - diff_mils.count()));
             }
             //InfoL << "";
         }
