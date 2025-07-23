@@ -21,7 +21,9 @@ purpose:		nv_cuda_ decoder
 #include "ext-codec/H265.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudawarping.hpp> // cv::cuda::resize
 #include "Common/ctranscode_info_mgr.h"
 
 namespace mediakit {
@@ -330,7 +332,8 @@ namespace mediakit {
         cv::Mat frameHost, frameHostGs, frameFromDevice, unused;
         int64_t pts = 0;
 
-
+        cv::cuda::GpuMat  encode_frame;
+      //  encode_frame.create(cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), cv::INTER_LINEAR);
         uint64_t   frame_ms = (1000 ) / m_transcode_info.get_fps();
         while (!m_stoped)
         {
@@ -346,9 +349,11 @@ namespace mediakit {
                frameFromDevice.release();
                 cv::waitKey(1); */
               //  InfoL << "";
-                m_encoder->encode(frame, pts, this);
+                //(InputArray src, OutputArray dst, Size dsize, double fx=0, double fy=0, int interpolation = INTER_LINEAR, Stream& stream = Stream::Null());
+                cv::cuda::resize(frame, encode_frame, cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), 0, 0, cv::INTER_NEAREST);
+                m_encoder->encode(encode_frame, pts, this);
                
-                
+                encode_frame.release();
               //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();
