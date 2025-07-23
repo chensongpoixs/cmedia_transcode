@@ -185,7 +185,7 @@ namespace mediakit {
 
     void cVideoDecoder::onEncoded(const std::vector<std::vector<uint8_t>>& vPacket, const std::vector<uint64_t>& pts)
     {
-        static FILE* out_file_ptr = NULL;
+        //static FILE* out_file_ptr = NULL;
         if (m_frame_callback && !m_stoped)
         {
             int32_t packet_index = 0;
@@ -199,12 +199,12 @@ namespace mediakit {
                 {
                     break;
                 }
-                if (!out_file_ptr)
+               /* if (!out_file_ptr)
                 {
                     out_file_ptr = fopen("test____dd.h264", "wb+");
                 }
                 fwrite(&d[0], d.size(), 1, out_file_ptr);
-                fflush(out_file_ptr);
+                fflush(out_file_ptr);*/
                 if (m_transcode_info.get_codec() == mediakit::CodecId::CodecH265)
                 {
                     auto frame1 = /*mediakit::*/ FrameImp::create</*mediakit::*/ H265Frame>();
