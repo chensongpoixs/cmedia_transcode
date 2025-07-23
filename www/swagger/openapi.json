@@ -25,8 +25,12 @@
         "description": "ZLMediaKit Documentation"
     },
     "servers": [
+       {
+            "url": "http://127.0.0.1:80/",
+            "description": "Localhost"
+        },
         {
-            "url": "/",
+            "url": "http://192.168.31.113:8089/",
             "description": "Localhost"
         }
     ],
@@ -361,6 +365,191 @@
                 }
             }
         },
+		"/index/api/set_transcode_info": {
+      "get": {
+        "tags": [
+          "GET"
+        ],
+        "summary": "设置转码接口",
+        "description": "设置转码接口",
+        "operationId": "set_transcode_info",
+        "parameters": [
+          {
+            "name": "secret",
+            "in": "query",
+            "description": "api操作密钥(配置文件配置)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+			,
+                        "example": "FTRaFEWs08KeTxKEEO25ePDKuV3CjOqp"
+          },
+          {
+            "name": "app",
+            "in": "query",
+            "description": "The password for login in clear text",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+			,
+                        "example": "live"
+          },
+          {
+            "name": "stream",
+            "in": "query",
+            "description": "The password for login in clear text",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+                        "example": "test1"
+          },
+          {
+            "name": "out_width",
+            "in": "query",
+            "description": "编码输出宽度",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 1920
+          },
+          {
+            "name": "out_height",
+            "in": "query",
+            "description": "编码输出高度",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 1920
+          },
+          {
+            "name": "out_codec",
+            "in": "query",
+            "description": "编码H264、H265",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 0
+          },
+          {
+            "name": "out_control_mode",
+            "in": "query",
+            "description": "编码模式",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 0
+          },
+          {
+            "name": "out_average_bitrate",
+            "in": "query",
+            "description": "平均码率",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 1000
+          },
+          {
+            "name": "out_max_bitrate",
+            "in": "query",
+            "description": "大码率",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 1000
+          },
+          {
+            "name": "out_gop",
+            "in": "query",
+            "description": "编码的GOP的大小",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 250
+          },
+          {
+            "name": "out_i_qp",
+            "in": "query",
+            "description": "编码的I帧的QP量化值[1~51]",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 28
+          },
+          {
+            "name": "out_p_qp",
+            "in": "query",
+            "description": "编码的P帧的QP量化值[1~51]",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32"
+            },
+                        "example": 35
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "headers": {
+              "X-Rate-Limit": {
+                "description": "calls per hour allowed by the user",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-Expires-After": {
+                "description": "date in UTC when token expires",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            "content": {
+               
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Invalid username/password supplied"
+          },
+			"responses": {
+				"200": {
+					"description": "Successful response",
+					"content": {
+						"application/json": {}
+					}
+				}
+			},
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        }
+      }
+    },
         "/index/api/restartServer": {
             "get": {
                 "tags": [
