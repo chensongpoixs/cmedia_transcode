@@ -304,7 +304,13 @@ namespace mediakit {
                    // m_packet_queue.pop_front();
                 }
 
-                if (!packet_ptr) {
+                if (!packet_ptr) 
+                {
+                    {
+                        std::lock_guard<std::mutex> lock{ m_lock };
+                        //packet_ptr = &m_packet_queue.front();
+                        m_packet_queue.pop_front();
+                    }
                     continue;
                 }
 
@@ -334,10 +340,13 @@ namespace mediakit {
 
         cv::cuda::GpuMat  encode_frame;
       //  encode_frame.create(cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), cv::INTER_LINEAR);
-        uint64_t   frame_ms = (1000 ) / m_transcode_info.get_fps();
+        int64_t   frame_ms = (1000000) / m_transcode_info.get_fps();
+        cv::cuda::Stream resize_stream = cv::cuda::Stream::Stream();
+       // std::chrono::microseconds   pre_cur ;
+        int64_t  cur_frame_ms = 0;
         while (!m_stoped)
         {
-            std::chrono::milliseconds pre_mils = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::microseconds pre_mils = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now().time_since_epoch());
           
             if (m_cuvid_video_render->nextFrame(frame, pts, tmp, 0))
@@ -350,28 +359,49 @@ namespace mediakit {
                 cv::waitKey(1); */
               //  InfoL << "";
                 //(InputArray src, OutputArray dst, Size dsize, double fx=0, double fy=0, int interpolation = INTER_LINEAR, Stream& stream = Stream::Null());
-                cv::cuda::resize(frame, encode_frame, cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), 0, 0, cv::INTER_NEAREST);
+                std::chrono::microseconds resize_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::system_clock::now().time_since_epoch());
+               
+                cv::cuda::resize(frame, encode_frame, cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), 0, 0, cv::INTER_NEAREST, resize_stream);
+                std::chrono::microseconds cur_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::system_clock::now().time_since_epoch());
+                std::chrono::microseconds diff_mils = resize_mils - pre_mils;;
+                InfoL << "nvidia resize ----> " << diff_mils.count();
                 m_encoder->encode(encode_frame, pts, this);
                
                 encode_frame.release();
               //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();
+                {
+                    std::chrono::microseconds cur_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::system_clock::now().time_since_epoch());
+                    std::chrono::microseconds diff_mils = cur_mils - pre_mils;
+                    cur_frame_ms += frame_ms;
+                    if (diff_mils.count() < cur_frame_ms)
+                    {
+                        std::this_thread::sleep_for(std::chrono::microseconds(cur_frame_ms - diff_mils.count()));
+                        cur_frame_ms = 0;
+                    }
+                    else
+                    {
+                        cur_frame_ms -= (diff_mils.count() - cur_frame_ms);
+                    }
+                
+                }
             }
             /*else if (!m_stoped)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }*/
-            std::chrono::milliseconds cur_mils = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch());
-            std::chrono::milliseconds diff_mils = cur_mils - pre_mils;
-            if (diff_mils.count() < frame_ms)
+           
+           /* else
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(frame_ms - diff_mils.count()));
-            }
+                pre_cur = frame_ms - diff_mils.count();
+            }*/
             //InfoL << "";
         }
-
+        
         InfoL << "encoder work  thread exit !!!";
     }
     void cVideoDecoder::_handler_packet_item(std::shared_ptr<Frame> &frame) 

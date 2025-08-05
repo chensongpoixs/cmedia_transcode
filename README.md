@@ -9,4 +9,6 @@
 ./ffmpeg -rtsp_transport tcp  -c:v h264 -i "rtsp://admin:hik12345@192.168.1.4:554/H264/ch1/main/av_stream"   -vcodec copy  -f flv   rtmp://192.168.31.113:11935/live/test1
 
 
+
+./ffmpeg -rtsp_transport tcp  -c:v h264 -i "rtsp://192.168.31.16:8554/live/11"  -vcodec  copy -f flv   rtmp://192.168.31.113/live/test2
 ```

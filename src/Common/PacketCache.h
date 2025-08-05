@@ -47,7 +47,11 @@ public:
         if (!flag && _policy.isFlushAble(is_video, key_pos, stamp, _cache->size())) {
             flush();
         }
-
+      /*  if (!_cache)
+        {
+            _cache = std::make_shared<packet_list>();
+            _key_pos = false;
+        }*/
         // 追加数据到最后  [AUTO-TRANSLATED:e24ccfb6]
         // Append data to the end
         _cache->emplace_back(std::move(pkt));
