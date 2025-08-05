@@ -389,11 +389,11 @@ namespace mediakit {
                     }
                 
                 }
-            }
-            /*else if (!m_stoped)
+            } 
+            else if (!m_stoped)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            }*/
+            } 
            
            /* else
             {

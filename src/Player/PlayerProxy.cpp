@@ -278,6 +278,18 @@ int PlayerProxy::totalReaderCount(MediaSource &sender) {
 }
 
 MediaOriginType PlayerProxy::getOriginType(MediaSource &sender) const {
+   
+    /*
+    
+    if (_muxer)
+    {
+        return _muxer->getOriginType(sender);
+    }
+    */
+    
+
+
+
     return MediaOriginType::pull;
 }
 
@@ -325,7 +337,9 @@ void PlayerProxy::onPlaySuccess() {
         }
     }
     _muxer->setMediaListener(shared_from_this());
-
+    //_muxer->setListener(_muxer);
+   // MediaSource::setListener(_muxer);
+  //  MediaSource::setListener(_muxer);
     auto videoTrack = getTrack(TrackVideo, false);
     if (videoTrack) {
         // 添加视频  [AUTO-TRANSLATED:afc7e0f7]

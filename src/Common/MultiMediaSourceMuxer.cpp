@@ -234,8 +234,10 @@ MultiMediaSourceMuxer::MultiMediaSourceMuxer(const MediaTuple& tuple, float dur_
 
 void MultiMediaSourceMuxer::setMediaListener(const std::weak_ptr<MediaSourceEvent> &listener) {
     setDelegate(listener);
-    MediaSink::setMediaListener(getDelegate());
+    MediaSink::setMediaListener(listener/*getDelegate()*/);
+   // MediaSourcesetListener(listener);
     auto self = shared_from_this();
+
     // 拦截事件  [AUTO-TRANSLATED:100ca068]
     // Intercept events
     if (_rtmp) {

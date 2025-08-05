@@ -161,7 +161,7 @@ namespace  dsp
         {
             CUVIDPARSERDISPINFO displayInfo;
             m_rawPackets.clear();
-            for (;;)
+            for (int32_t i = 0; i < 5; ++i)
             {
                 if (m_frame_queue->dequeue(displayInfo, m_rawPackets))
                 {
@@ -178,7 +178,10 @@ namespace  dsp
                 {
                     return false;
                 }
-
+                if (i > 3)
+                {
+                    return  false;
+                }
                 // Wait a bit
                // Thread::sleep(1);
                 // TODO@chensong 2025-07-16    帧率 fps/s

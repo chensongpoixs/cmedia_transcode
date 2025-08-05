@@ -130,12 +130,12 @@ void RtmpMediaSourceImp::setProtocolOption(const ProtocolOption &option) {
     _option = option;
     _option.enable_rtmp = !direct_proxy;
     _muxer = std::make_shared<MultiMediaSourceMuxer>(_tuple, _demuxer->getDuration(), _option);
-    _muxer->setMediaListener(getListener());
+    
     _muxer->setTrackListener(std::static_pointer_cast<RtmpMediaSourceImp>(shared_from_this()));
     // 让_muxer对象拦截一部分事件(比如说录像相关事件)  [AUTO-TRANSLATED:7d27c400]
     // Let the _muxer object intercept some events (such as recording related events)
     MediaSource::setListener(_muxer);
-
+    _muxer->setMediaListener(getListener());
     for (auto &track : _demuxer->getTracks(false)) {
         _muxer->addTrack(track);
         track->addDelegate(_muxer);
