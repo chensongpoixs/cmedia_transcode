@@ -151,7 +151,7 @@ private:
     std::string getOriginUrl(MediaSource &sender) const override;
     std::shared_ptr<toolkit::SockInfo> getOriginSock(MediaSource &sender) const override;
     float getLossRate(MediaSource &sender, TrackType type) override;
-
+      toolkit::EventPoller::Ptr getOwnerPoller(MediaSource& sender)   override;
     void rePlay(const std::string &strUrl, int iFailedCnt);
     void onPlaySuccess();
     void setDirectProxy();
@@ -180,6 +180,7 @@ private:
     std::atomic<uint64_t> _live_secs;
 
     std::atomic<uint64_t> _repull_count;
+    //EventPoller::Ptr _poller;
 };
 
 } /* namespace mediakit */

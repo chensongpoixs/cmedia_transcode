@@ -25,6 +25,7 @@ public:
 
     void play(const std::string &url) override;
     toolkit::EventPoller::Ptr getPoller();
+    toolkit::EventPoller::Ptr getPoller() const;
     void setOnCreateSocket(toolkit::Socket::onCreateSocket cb);
 
 private:

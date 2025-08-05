@@ -209,8 +209,8 @@ void MediaSink::encode_frame(const Frame::Ptr& frame)
             // listener未重载getOwnerPoller  [AUTO-TRANSLATED:0ebf2e53]
             // Listener did not reload getOwnerPoller
             ErrorL << "media source event getOwnerPoller == nullptr !!!";
-           // return;
-            poller = toolkit::EventPollerPool::Instance().getPoller();
+            return;
+           // poller = toolkit::EventPollerPool::Instance().getPoller();
         }
     }
 

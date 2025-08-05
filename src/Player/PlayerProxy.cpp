@@ -279,13 +279,13 @@ int PlayerProxy::totalReaderCount(MediaSource &sender) {
 
 MediaOriginType PlayerProxy::getOriginType(MediaSource &sender) const {
    
-    /*
-    
-    if (_muxer)
+     
+    /*EventPoller::Ptr  poller = getPoller();
+    if (poller)
     {
-        return _muxer->getOriginType(sender);
-    }
-    */
+        return poller->getOriginType(sender);
+    }*/
+    
     
 
 
@@ -299,6 +299,11 @@ string PlayerProxy::getOriginUrl(MediaSource &sender) const {
 
 std::shared_ptr<SockInfo> PlayerProxy::getOriginSock(MediaSource &sender) const {
     return getSockInfo();
+}
+
+toolkit::EventPoller::Ptr PlayerProxy::getOwnerPoller(MediaSource& sender)
+{
+    return getPoller();
 }
 
 float PlayerProxy::getLossRate(MediaSource &sender, TrackType type) {

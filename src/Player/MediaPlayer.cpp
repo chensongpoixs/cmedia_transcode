@@ -52,7 +52,10 @@ void MediaPlayer::play(const string &url) {
 EventPoller::Ptr MediaPlayer::getPoller(){
     return _poller;
 }
-
+toolkit::EventPoller::Ptr MediaPlayer::getPoller() const
+{
+    return _poller;
+}
 void MediaPlayer::setOnCreateSocket(Socket::onCreateSocket cb){
     setOnCreateSocket_l(_delegate, cb);
     _on_create_socket = std::move(cb);
