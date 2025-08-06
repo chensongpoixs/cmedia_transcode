@@ -17,6 +17,11 @@
 #include "Extension/Frame.h"
 #include "Extension/Track.h"
 #include "Common/ctranscode_info_mgr.h"
+#include <list>
+#include <thread>
+#include <list>
+#include <mutex>
+#include <condition_variable>
 namespace mediakit{
 
 class TrackListener {
@@ -103,7 +108,7 @@ public:
      */
     void set_media_transconde(const MediaTuple &tupel);
 
-
+    virtual ~MediaSink();
 
 
     void encode_frame(const Frame::Ptr& frame);
@@ -269,7 +274,14 @@ private:
      */
     bool addMuteAudioTrack();
 
+
+
+    
 private:
+    void _work_pthread();
+
+    void _handler_frame_item();
+    private:
     bool _audio_add = false;
     bool _have_video = false;
     bool _enable_audio = true;
@@ -284,6 +296,16 @@ private:
     std::unordered_map<int, toolkit::List<Frame::Ptr> > _frame_unread;
     std::unordered_map<int, std::function<void()> > _track_ready_callback;
     std::unordered_map<int, std::pair<Track::Ptr, bool/*got frame*/> > _track_map;
+
+
+    std::mutex                video_queue_lock_;
+    std::list<Frame::Ptr>     video_queue_frame_;
+
+
+
+    std::condition_variable   condition_;
+    std::thread               video_frame_thread_;
+    std::atomic_bool          video_stoped_{true};
 };
 
 

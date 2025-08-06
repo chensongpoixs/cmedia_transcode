@@ -172,6 +172,8 @@ void MediaSink::set_media_transconde(const MediaTuple & tuple)
             // _poller = EventPollerPool::Instance().getPoller();
             // _create_in_poller = _poller->isCurrentThread();
             _video_decoder = std::make_shared</*chen::*/ cVideoDecoder>();
+            video_stoped_ = false;
+            video_frame_thread_ = std::thread(&MediaSink::_work_pthread, this);
             if (_video_decoder) {
                 _video_decoder->init(std::bind(&MediaSink::encode_frame, this, placeholders::_1), tuple);
             }
@@ -180,69 +182,48 @@ void MediaSink::set_media_transconde(const MediaTuple & tuple)
     }
 }
 
+MediaSink::~MediaSink()
+{
+
+    if (!_video_decoder)
+    {
+        return;
+    }
+    _video_decoder->destroy();
+
+    {
+        video_stoped_.store(true);
+    }
+    condition_.notify_all();
+    InfoL << " video_frame_thread_ ... !!!";
+    if (video_frame_thread_.joinable())
+    {
+        video_frame_thread_.join();
+    }
+    InfoL << " video_frame_thread_ OK !!!";
+    //m_transcode_info.();
+    InfoL << " video queue frame ....";
+    while (!video_queue_frame_.empty())
+    { 
+             
+       video_queue_frame_.pop_front();
+        
+    }
+
+    InfoL << " video queue frame OK !!!";
+}
+
 void MediaSink::encode_frame(const Frame::Ptr& frame)
 {
-    std::shared_ptr<MediaSourceEvent> listener = _listener.lock();
-    toolkit::EventPoller::Ptr poller = nullptr;
-    if (!listener) {
-        // ErrorL << "media source event == nullptr !!!";
-        // return;
-        poller = toolkit::EventPollerPool::Instance().getPoller();
-    }
-    else 
+
+
     {
-        // InfoL << "media source event == ok !!!";
-
-        try {
-            poller = listener->getOwnerPoller(MediaSource::NullMediaSource());
-            /*auto ret = listener->getOwnerPoller(sender);
-            if (ret != _poller) {
-                WarnL << "OwnerPoller changed " << _poller->getThreadName() << " -> " << ret->getThreadName() << " : " << shortUrl();
-                _poller = ret;
-                if (_paced_sender) {
-                    _paced_sender->resetTimer(_poller);
-                }
-            }*/
-
-        }
-        catch (MediaSourceEvent::NotImplemented&) {
-            // listener未重载getOwnerPoller  [AUTO-TRANSLATED:0ebf2e53]
-            // Listener did not reload getOwnerPoller
-            ErrorL << "media source event getOwnerPoller == nullptr !!!";
-            return;
-           // poller = toolkit::EventPollerPool::Instance().getPoller();
-        }
+        std::lock_guard<std::mutex> lock(video_queue_lock_);
+        video_queue_frame_.emplace_back(frame);
     }
 
-    // toolkit::EventPollerPool::Instance().getPoller();
-    if (poller) {
-        //  doStatistics(frame);
-          //   Frame::Ptr frame1 = frame;
-        poller->async([this, frame]() {
-            // bool ret = false;
-            //std::lock_guard<std::recursive_mutex> lck(_mtx);
-            //for (auto &pr : _delegates) {
-            //    if (pr.second->inputFrame(frame)) {
-            //        // ret = true;
-            //    }
-            //}
-            auto it = _track_map.find(frame->getIndex());
-            if (it == _track_map.end()) {
-                return;
-            }
-           // InfoL << "_count = " << _count << ", g_media_sink = " << g_media_sink_count;
-            // got frame 
-            it->second.second = true;
-            auto ret = it->second.first->inputFrame(frame);
-            if (_mute_audio_maker && frame->getTrackType() == TrackVideo) {
-                // 视频驱动产生静音音频  [AUTO-TRANSLATED:2a8c789c]
-                // Video driver generates silent audio
-                // TODO@chensong 2025-07-03 视频转音频的异常崩溃问题
-                _mute_audio_maker->inputFrame(frame);
-            }
-            checkTrackIfReady();
-            });
-    }
+    condition_.notify_one();
+  
 }
 
 void MediaSink::setMediaListener(const std::weak_ptr<MediaSourceEvent>& listener)
@@ -491,6 +472,139 @@ bool MediaSink::addMuteAudioTrack() {
     onTrackReady(audio);
     TraceL << "Mute aac track added";
     return true;
+}
+
+void MediaSink::_work_pthread()
+{
+
+    while (!video_stoped_)
+    {
+
+
+        // wait 
+        /*{
+            std::unique_lock<std::mutex> lock(video_queue_lock_);
+            condition_.wait(lock, [this]() { return video_queue_frame_.size() > 0 || video_stoped_; });
+        }*/
+
+
+        
+        {
+            auto timeout_time = std::chrono::system_clock::now() + std::chrono::milliseconds(80);
+            std::unique_lock<std::mutex> lock(video_queue_lock_);
+            condition_.wait_until(lock, timeout_time, [this]() { return video_queue_frame_.size() > 0 || video_stoped_; });
+        }
+        _handler_frame_item();
+    }
+
+
+}
+
+void MediaSink::_handler_frame_item()
+{
+
+    // 10;
+    
+
+    {
+        std::lock_guard<std::mutex>  lock(video_queue_lock_);
+        if (video_queue_frame_.empty())
+        {
+            return;
+        }
+    }
+   
+
+
+
+    std::shared_ptr<MediaSourceEvent> listener = _listener.lock();
+    toolkit::EventPoller::Ptr poller = nullptr;
+    if (!listener) {
+        // ErrorL << "media source event == nullptr !!!";
+        // return;
+        poller = toolkit::EventPollerPool::Instance().getPoller();
+    }
+    else
+    {
+        // InfoL << "media source event == ok !!!";
+
+        try {
+            poller = listener->getOwnerPoller(MediaSource::NullMediaSource());
+            /*auto ret = listener->getOwnerPoller(sender);
+            if (ret != _poller) {
+                WarnL << "OwnerPoller changed " << _poller->getThreadName() << " -> " << ret->getThreadName() << " : " << shortUrl();
+                _poller = ret;
+                if (_paced_sender) {
+                    _paced_sender->resetTimer(_poller);
+                }
+            }*/
+
+        }
+        catch (MediaSourceEvent::NotImplemented&) {
+            // listener未重载getOwnerPoller  [AUTO-TRANSLATED:0ebf2e53]
+            // Listener did not reload getOwnerPoller
+            ErrorL << "media source event getOwnerPoller == nullptr !!!";
+            return;
+            // poller = toolkit::EventPollerPool::Instance().getPoller();
+        }
+    }
+
+    // toolkit::EventPollerPool::Instance().getPoller();
+    if (poller) {
+        //  doStatistics(frame);
+          //   Frame::Ptr frame1 = frame;
+        poller->async([this]() {
+            // bool ret = false;
+            //std::lock_guard<std::recursive_mutex> lck(_mtx);
+            //for (auto &pr : _delegates) {
+            //    if (pr.second->inputFrame(frame)) {
+            //        // ret = true;
+            //    }
+            //}
+            int32_t frame_count = 0;
+            Frame::Ptr frame = nullptr;
+
+            while (!video_stoped_ || frame_count < 30 /*|| !video_queue_frame_.empty()*/)
+            {
+
+                {
+                    std::lock_guard<std::mutex>  lock(video_queue_lock_);
+                    if (video_queue_frame_.empty())
+                    {
+                        break;
+                    }
+                    frame = video_queue_frame_.front();
+                    video_queue_frame_.pop_front();
+                }
+                ++frame_count;
+
+                auto it = _track_map.find(frame->getIndex());
+                if (it == _track_map.end()) {
+                    continue;
+                }
+                // InfoL << "_count = " << _count << ", g_media_sink = " << g_media_sink_count;
+                 // got frame 
+                it->second.second = true;
+                auto ret = it->second.first->inputFrame(frame);
+                if (_mute_audio_maker && frame->getTrackType() == TrackVideo) {
+                    // 视频驱动产生静音音频  [AUTO-TRANSLATED:2a8c789c]
+                    // Video driver generates silent audio
+                    // TODO@chensong 2025-07-03 视频转音频的异常崩溃问题
+                    _mute_audio_maker->inputFrame(frame);
+                }
+                checkTrackIfReady();
+            }
+            
+
+
+
+           
+            });
+    }
+
+   
+
+
 }
 
 bool MediaSink::isAllTrackReady() const {

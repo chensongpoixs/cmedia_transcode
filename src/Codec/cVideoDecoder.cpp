@@ -359,17 +359,17 @@ namespace mediakit {
                 cv::waitKey(1); */
               //  InfoL << "";
                 //(InputArray src, OutputArray dst, Size dsize, double fx=0, double fy=0, int interpolation = INTER_LINEAR, Stream& stream = Stream::Null());
-                std::chrono::microseconds resize_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                /*std::chrono::microseconds resize_mils = std::chrono::duration_cast<std::chrono::microseconds>(
                     std::chrono::system_clock::now().time_since_epoch());
                
                 cv::cuda::resize(frame, encode_frame, cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), 0, 0, cv::INTER_NEAREST, resize_stream);
                 std::chrono::microseconds cur_mils = std::chrono::duration_cast<std::chrono::microseconds>(
                     std::chrono::system_clock::now().time_since_epoch());
                 std::chrono::microseconds diff_mils = resize_mils - pre_mils;;
-                InfoL << "nvidia resize ----> " << diff_mils.count();
-                m_encoder->encode(encode_frame, pts, this);
+                InfoL << "nvidia resize ----> " << diff_mils.count();*/
+                m_encoder->encode(frame, pts, this);
                
-                encode_frame.release();
+                frame.release();
               //  InfoL << "";
               //  frameFromDevice.release();
                 //frame.release();
