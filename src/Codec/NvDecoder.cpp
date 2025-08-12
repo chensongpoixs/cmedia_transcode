@@ -5,7 +5,7 @@ author:			chensong
 
 purpose:		nv_cuda_ decoder
 ************************************************************************************************/
-
+#ifdef _MSC_VER
 
 #include <iostream>
 #include <algorithm>
@@ -632,3 +632,6 @@ void NvDecoder::UnlockFrame(uint8_t **ppFrame, int nFrame)
     std::lock_guard<std::mutex> lock(m_mtxVPFrame);
     m_vpFrame.insert(m_vpFrame.end(), &ppFrame[0], &ppFrame[nFrame]);
 }
+
+
+#endif // #ifdef _MSC_VER

@@ -12,6 +12,7 @@ purpose:		nv_cuda_ decoder
 #include <vector>
 #include <stdint.h>
 #include <mutex>
+#ifdef _MSC_VER
 #include <cuda.h>
 #include "NvEncoder.h"
 #include "ccuda_define.h"
@@ -75,5 +76,5 @@ protected:
 private:
     size_t m_cudaPitch = 0;
 };
- 
+#endif //  #ifdef _MSC_VER
 #endif

@@ -7,6 +7,7 @@ purpose:		nv_cuda_ decoder
 ************************************************************************************************/
 #include "cframe_queue.h"
 #include "Util/logger.h"
+#ifdef _MSC_VER
 namespace  dsp
 {
 	RawPacket::RawPacket(const unsigned char* data_, const size_t size, const bool containsKeyFrame_) :
@@ -175,4 +176,4 @@ namespace  dsp
 }
 
 
- 
+ #endif

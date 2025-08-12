@@ -9,6 +9,7 @@ purpose:		nv_cuda_ decoder
 #ifndef _C_VIDEO_PARSER_H_
 #define _C_VIDEO_PARSER_H_
 #include "cvideo_decoder.h"
+#ifdef _MSC_VER
 #include <cuda_runtime_api.h>
 #include "ccuda_define.h"
 #include <cuda_runtime.h>
@@ -336,7 +337,7 @@ namespace  dsp
         return m_cuda_decoder;
 	}
 }
-
+#endif // 
 
 
 #endif // _C_VIDEO_PARSER_H_

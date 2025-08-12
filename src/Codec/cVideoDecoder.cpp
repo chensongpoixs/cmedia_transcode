@@ -9,7 +9,12 @@ purpose:		nv_cuda_ decoder
 #include "Util/logger.h"
 #ifdef _MSC_VER
  
-
+ 
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudawarping.hpp> // cv::cuda::resize
 #elif defined(__GNUC__)
 
 #else
@@ -19,11 +24,7 @@ purpose:		nv_cuda_ decoder
 #include "cVideoEncoder.h"
 #include "ext-codec/H264.h"
 #include "ext-codec/H265.h"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/core/cuda.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/cudawarping.hpp> // cv::cuda::resize
+
 #include "Common/ctranscode_info_mgr.h"
 
 namespace mediakit {
@@ -55,6 +56,9 @@ namespace mediakit {
             fps = 25;
         }
         m_frame_samples = 90000 / 25;
+
+
+#ifdef _MSC_VER
         m_cuvid_video_render = std::make_shared<dsp::ccuvid_video_render>();
        // m_cuvid_video_render->init(cv::cudacodec::Codec::H264);
         m_encoder = std::make_shared<cVideoEncoder>();
@@ -114,6 +118,19 @@ namespace mediakit {
         m_frame_callback = callback;
       //  _FrameWriterInterface = ptr;
         m_thread = std::thread(&cVideoDecoder::_work_thread, this);
+#elif defined(__GNUC__)
+        m_rockchip_video_render = std::make_shared<dsp::crockchip_decoder>();
+        // m_cuvid_video_render->init(cv::cudacodec::Codec::H264);
+        m_encoder = std::make_shared<cVideoEncoder>();
+        m_stoped.store(false);
+        m_frame_callback = callback;
+        //  _FrameWriterInterface = ptr;
+        m_thread = std::thread(&cVideoDecoder::_work_thread, this);
+        m_encoder_thread = std::thread(&cVideoDecoder::_encoder_thread, this);
+        return true;
+#else
+
+#endif
 		return true;
     }
 
@@ -122,10 +139,19 @@ namespace mediakit {
         m_stoped.store(true);
         
         m_condition.notify_all();
+#ifdef _MSC_VER
         if (m_cuvid_video_render)
         {
             m_cuvid_video_render->frame_end_queue();
         }
+#elif defined(__GNUC__)
+        if (m_rockchip_video_render)
+        {
+            //m_rockchip_video_render
+        }
+#else
+
+#endif
     }
 
     void cVideoDecoder::destroy()
@@ -144,7 +170,7 @@ namespace mediakit {
         InfoL << " thread join able encoder exit end OK !!!";
 
         m_packet_queue.clear();
-
+#ifdef _MSC_VER
         InfoL <<   "cuvid video render destroy !!!";
         if (m_cuvid_video_render)
         {
@@ -157,6 +183,18 @@ namespace mediakit {
             m_encoder->destroy();
         }
         InfoL << "cuvid video encoder  destroy OK !!!";
+#elif defined(__GNUC__)
+        if (m_rockchip_video_render)
+        {
+            m_rockchip_video_render->destroy();
+        }
+        if (m_encoder)
+        {
+            m_encoder->destroy();
+        }
+#else
+
+#endif
     }
 
     void cVideoDecoder::push_frame(/*const char *  data, int32_t size*/ const std::shared_ptr<Frame> &frame)
@@ -168,9 +206,11 @@ namespace mediakit {
         {
             std::lock_guard<std::mutex> lock(m_lock);
             m_packet_queue.push_back(frame);
+            InfoL << "m_packet_queue size = " << m_packet_queue.size();
             //std::cout << "video decoder = " << m_count << "][ totoal video decoder num = " << g_video_decoder_count << "]" << std::endl;
            // InfoL <<   "video decoder = " << m_count << "][ totoal video decoder num = " << g_video_decoder_count << "]";
         }
+        
         m_condition.notify_one();
        
     }
@@ -331,7 +371,7 @@ namespace mediakit {
     void cVideoDecoder::_encoder_thread()
     {
 
-       
+#ifdef _MSC_VER
        // m_encoder->init(1920, 1080, m_transcode_info.get_fps(), m_transcode_info.get_codec());
         m_encoder->init(m_transcode_info);
         cv::cuda::GpuMat frame, tmp;
@@ -368,7 +408,7 @@ namespace mediakit {
                 std::chrono::microseconds diff_mils = resize_mils - pre_mils;;
                 InfoL << "nvidia resize ----> " << diff_mils.count();*/
                 m_encoder->encode(frame, pts, this);
-               
+                 
                 frame.release();
               //  InfoL << "";
               //  frameFromDevice.release();
@@ -380,7 +420,7 @@ namespace mediakit {
                     cur_frame_ms += frame_ms;
                     if (diff_mils.count() < cur_frame_ms)
                     {
-                        std::this_thread::sleep_for(std::chrono::microseconds(cur_frame_ms - diff_mils.count()));
+                      //  std::this_thread::sleep_for(std::chrono::microseconds(cur_frame_ms - diff_mils.count()));
                         cur_frame_ms = 0;
                     }
                     else
@@ -401,12 +441,93 @@ namespace mediakit {
             }*/
             //InfoL << "";
         }
-        
+#elif defined(__GNUC__)
+
+        m_encoder->init(m_transcode_info);
+       /* cv::cuda::GpuMat frame, tmp;
+        cv::Mat frameHost, frameHostGs, frameFromDevice, unused;*/
+        int64_t pts = 0;
+        MppFrame frame = NULL;
+     //   cv::cuda::GpuMat  encode_frame;
+        //  encode_frame.create(cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), cv::INTER_LINEAR);
+        int64_t   frame_ms = (1000000) / m_transcode_info.get_fps();
+      //  cv::cuda::Stream resize_stream = cv::cuda::Stream::Stream();
+        // std::chrono::microseconds   pre_cur ;
+        int64_t  cur_frame_ms = 0;
+        while (!m_stoped)
+        {
+            std::chrono::microseconds pre_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::system_clock::now().time_since_epoch());
+
+            if (m_rockchip_video_render->nextFrame(frame, pts))
+            {
+
+                if (frame == NULL)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    continue;
+                }
+                // InfoL << "";
+                // frame.channels();
+             /*  frame.download(frameFromDevice);
+                cv::imshow("====", frameFromDevice);
+                frameFromDevice.release();
+                 cv::waitKey(1); */
+                 //  InfoL << "";
+                   //(InputArray src, OutputArray dst, Size dsize, double fx=0, double fy=0, int interpolation = INTER_LINEAR, Stream& stream = Stream::Null());
+                   /*std::chrono::microseconds resize_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                       std::chrono::system_clock::now().time_since_epoch());
+
+                   cv::cuda::resize(frame, encode_frame, cv::Size(m_transcode_info.get_width(), m_transcode_info.get_height()), 0, 0, cv::INTER_NEAREST, resize_stream);
+                   std::chrono::microseconds cur_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                       std::chrono::system_clock::now().time_since_epoch());
+                   std::chrono::microseconds diff_mils = resize_mils - pre_mils;;
+                   InfoL << "nvidia resize ----> " << diff_mils.count();*/
+                m_encoder->encode(frame, pts, this);
+                mpp_frame_deinit(&frame);
+                InfoL  << "get frame ";
+              //  frame.release();
+                //  InfoL << "";
+                //  frameFromDevice.release();
+                  //frame.release();
+                {
+                    std::chrono::microseconds cur_mils = std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::system_clock::now().time_since_epoch());
+                    std::chrono::microseconds diff_mils = cur_mils - pre_mils;
+                    cur_frame_ms += frame_ms;
+                    if (diff_mils.count() < cur_frame_ms)
+                    {
+                       // std::this_thread::sleep_for(std::chrono::microseconds(cur_frame_ms - diff_mils.count()));
+                        cur_frame_ms = 0;
+                    }
+                    else
+                    {
+                        cur_frame_ms -= (diff_mils.count() - cur_frame_ms);
+                    }
+
+                }
+            }
+            else if (!m_stoped)
+            {
+                WarnL << "get frame failed !!!";
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+
+            /* else
+             {
+                 pre_cur = frame_ms - diff_mils.count();
+             }*/
+             //InfoL << "";
+        }
+       // docoder.init(MPP_VIDEO_CodingAVC);
+#else
+
+#endif
         InfoL << "encoder work  thread exit !!!";
     }
     void cVideoDecoder::_handler_packet_item(std::shared_ptr<Frame> &frame) 
     {
-    
+#ifdef _MSC_VER
         if (!m_cuvid_video_render->initd())
         {
             cv::cudacodec::Codec   codec = cv::cudacodec::Codec::H264;
@@ -577,7 +698,34 @@ namespace mediakit {
             // fpOut.write(reinterpret_cast<char*>(ppFrame[i]), dec.GetFrameSize());
         }
       
-      
+#elif defined(__GNUC__)
+        if (m_rockchip_video_render->initd())
+        {
+            //cv::cudacodec::Codec   codec = cv::cudacodec::Codec::H264;
+            MppCodingType  codec = MPP_VIDEO_CodingAVC;
+            if (frame->getCodecId() == mediakit::CodecH264)
+            {
+                codec = MPP_VIDEO_CodingAVC;
+            }
+            else if (frame->getCodecId() == mediakit::CodecH265)
+            {
+                codec = MPP_VIDEO_CodingHEVC;
+            }
+            else
+            {
+                codec = MPP_VIDEO_CodingAVC;
+            }
+            m_rockchip_video_render->init(codec);
+        }
+        m_rockchip_video_render->push_packet(frame->data(), frame->size(), frame->dts(), frame->dts());
+        //m_rockchip_video_render->pu
+      //  m_cuvid_video_render->parseVideoData((const unsigned char*)frame->data(), frame->size(), frame->dts(), frame->keyFrame());
+
+
+    return;
+#else
+
+#endif
  
     }
    

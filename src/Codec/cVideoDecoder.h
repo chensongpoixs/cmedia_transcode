@@ -44,6 +44,8 @@ purpose:		nv_cuda_ decoder
 #include "Record/Recorder.h"
 #include "Common/ctranscode_info_mgr.h"
 #include "ccuvid_video_render.h"
+#include "crockchip_decoder.h"
+
 namespace mediakit {
 
 
@@ -55,7 +57,16 @@ namespace mediakit {
      class Frame;
     typedef std::function<void(std::shared_ptr<Frame> frame)> DISPATHFRAME;
      
+	 
+	#ifdef _MSC_VER
 	class cVideoDecoder : public cv::cudacodec::EncoderCallback 
+	#elif defined(__GNUC__)
+ 
+	class cVideoDecoder : public  dsp::EncoderCallback
+#else
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
 	{
      public:
         
@@ -67,10 +78,18 @@ namespace mediakit {
             : m_stoped (true)
             , m_packet_queue ()
              , m_encoder (nullptr)
-            , m_nv_decoder(nullptr)
+            
             , m_frame_callback(nullptr)
              , m_count(0)
+#ifdef _MSC_VER
+             , m_nv_decoder(nullptr)
              , m_cuvid_video_render(nullptr)
+#elif defined(__GNUC__)
+            , m_rockchip_video_render(nullptr)
+#else
+             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
              , m_media()
              , m_transcode_info()
         {}
@@ -126,16 +145,22 @@ namespace mediakit {
          std::shared_ptr < cVideoEncoder> m_encoder;
 
 
-         //std::shared_ptr<NvDecoder> m_nv_decoder;
-         NvDecoder *m_nv_decoder;
+       
         //std::shared_ptr<FrameDispatcher> _FrameWriterInterface;
 
          DISPATHFRAME m_frame_callback;
          int32_t m_count;
 
-
+#ifdef _MSC_VER
+         //std::shared_ptr<NvDecoder> m_nv_decoder;
+         NvDecoder* m_nv_decoder;
          std::shared_ptr< dsp::ccuvid_video_render>   m_cuvid_video_render;
-
+#elif defined(__GNUC__)
+         std::shared_ptr< dsp::crockchip_decoder>   m_rockchip_video_render;
+#else
+         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
 
          std::thread   m_encoder_thread;
 

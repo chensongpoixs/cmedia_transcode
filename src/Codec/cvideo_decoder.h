@@ -9,6 +9,7 @@ purpose:		nv_cuda_ decoder
 #ifndef _C_VIDEO_DECODER_NV_H_
 #define _C_VIDEO_DECODER_NV_H_
 #include <mutex>
+#ifdef _MSC_VER
 #include <opencv2/core.hpp>
 #include <nvcuvid.h>
 #include <opencv2/core/cuda.hpp>
@@ -81,6 +82,6 @@ namespace  dsp
 	};
 }
 
-
+#endif // #ifdef _MSC_VER
 
 #endif // _C_VIDEO_PARSER_H_

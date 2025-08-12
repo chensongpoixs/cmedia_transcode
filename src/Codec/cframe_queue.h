@@ -11,6 +11,7 @@ purpose:		nv_cuda_ decoder
 #include <queue>
 #include <vector>
 #include <mutex>
+#ifdef _MSC_VER
 #include <nvcuvid.h>
 namespace  dsp
 {
@@ -81,6 +82,6 @@ namespace  dsp
 	
 }
 
-
+#endif
 
 #endif // _C_FRAME_QUEUE_H_

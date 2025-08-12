@@ -7,6 +7,7 @@ purpose:		nv_cuda_ decoder
 ************************************************************************************************/
 #include "ccuvid_video_render.h"
 #include "ccuda_define.h"
+#ifdef _MSC_VER
 //#include <opencv2/imgproc.hpp>
 //#include <opencv2/highgui.hpp>
 namespace  dsp
@@ -264,4 +265,11 @@ namespace  dsp
 
 
 
- 
+ #elif defined(__GNUC__)
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#else
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif

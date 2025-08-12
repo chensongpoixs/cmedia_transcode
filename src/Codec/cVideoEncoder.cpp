@@ -26,6 +26,7 @@ namespace mediakit {
       //  encoder_params.nvPreset = cv::cudacodec::EncodePreset::ENC_PRESET_P5;
        // encoder_params.encodingProfile = cv::cudacodec::EncodeProfile::ENC_H264_PROFILE_MAIN;
       //  encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_CBR;
+#ifdef _MSC_VER
         encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS; 
         encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS;
         encoder_params.rateControlMode = cv::cudacodec::EncodeParamsRcMode::ENC_PARAMS_RC_CONSTQP;
@@ -324,10 +325,21 @@ namespace mediakit {
   //      }
 
 		return true;
+
+
+#elif defined(__GNUC__)
+
+return true;
+#else
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+return false;
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
 	}
      static const int32_t DEFAULT_BIT = 1000;
     bool cVideoEncoder::init(const dsp::ctranscode_info& info)
     {
+#ifdef _MSC_VER
         encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS;
        // encoder_params.encodingProfile = cv::cudacodec::EncodeProfile::ENC_H264_PROFILE_MAIN;
         encoder_params.tuningInfo = cv::cudacodec::EncodeTuningInfo::ENC_TUNING_INFO_LOSSLESS;
@@ -376,6 +388,56 @@ namespace mediakit {
 
 
         return true;
+#elif defined(__GNUC__)
+        //video_info_param   video_param;
+        m_param.width = info.get_width();
+        m_param.height = info.get_height();
+       // video_param.height = height;
+        m_fps = info.get_fps();
+         
+        if (info.get_codec() == mediakit::CodecH264)
+        {
+            m_codec = MPP_VIDEO_CodingAVC;
+        }
+        else if (info.get_codec() == mediakit::CodecH265)
+        {
+            m_codec = MPP_VIDEO_CodingHEVC;
+        }
+        else
+        {
+            m_codec = MPP_VIDEO_CodingAVC;
+        }
+        // default  rk3588 NV12
+        m_param.fmt = 0;// MPP_FMT_YUV420SP_VU;
+        m_param.input_fps = 25;
+        m_param.output_fps = 25;
+        m_param.type = m_codec;
+        m_param.avg_bitrate = info.get_average_bitrate() * DEFAULT_BIT;
+        m_param.max_bitrate = info.get_max_bitrate() * DEFAULT_BIT;
+        m_param.min_bitrate = info.get_average_bitrate() * DEFAULT_BIT;
+        m_param.gop_size = info.get_gop();
+        m_param.rc_mode = MPP_ENC_RC_MODE_CBR;
+        //m_encoder.init(m_codec, video_param);
+        /*
+        video_param.width = width;
+				video_param.height = height;
+				static const int32_t   default_bitrate = 1000;
+				video_param.avg_bitrate = 500 * default_bitrate;
+				video_param.min_bitrate = 500 * default_bitrate;
+				video_param.max_bitrate = 500 * default_bitrate;
+				video_param.gop_size = 250;
+				video_param.fmt = fmt;
+				video_param.input_fps = 25;
+				video_param.output_fps = 25;
+				video_param.rc_mode = MPP_ENC_RC_MODE_CBR;
+        */
+
+        return true;
+#else
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        return false;
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
         return false;
     }
 
@@ -390,7 +452,7 @@ namespace mediakit {
     {
         int32_t ret = 0;
 
-        
+#ifdef _MSC_VER
         
             const NvEncInputFrame *encoderInputFrame = m_encoder->GetNextInputFrame();
             NvEncoderCuda::CopyToDeviceFrame(
@@ -406,6 +468,14 @@ namespace mediakit {
             params.frameIdx = (uint32_t)pts;
             
             m_encoder->EncodeFrame(vPacket, ptss, &params);
+#elif defined(__GNUC__)
+
+        return  ;
+#else
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        return  ;
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
            /* static FILE *out_file_ptr = NULL;
             if (!out_file_ptr)
             {
@@ -478,9 +548,11 @@ namespace mediakit {
    //    cv::cuda::Stream stream = cv::cuda::Stream::Null();
    //     return std::make_shared<dsp::VideoWriterImpl>(callback, frameSize, codec, fps, colorFormat, params, stream);
    // }
+#ifdef _MSC_VER
     void cVideoEncoder::encode(const cv::Mat& frame, int64_t pts, cv::cudacodec::EncoderCallback * callback)
     {
        // InfoL << "";
+ 
         if (!writer)
         {
             cv::cuda::Stream stream = cv::cuda::Stream::Null();
@@ -490,9 +562,11 @@ namespace mediakit {
       //  InfoL << "";
        // frame.download(frameFromDevice);
         writer->write(frame, pts);
+ 
     }
     void cVideoEncoder::encode(const cv::cuda::GpuMat& frame, int64_t pts, cv::cudacodec::EncoderCallback* callback)
     {
+
         if (!writer)
         {
             cv::cuda::Stream stream = cv::cuda::Stream::Null();
@@ -502,7 +576,35 @@ namespace mediakit {
 
         // frame.download(frameFromDevice);
         writer->write(frame, pts);
+
     }
+#elif defined(__GNUC__)
+    bool cVideoEncoder::encode(MppFrame& frame, int64_t pts, dsp::EncoderCallback* callback)
+    {
+        if (!frame)
+        {
+            return false;
+        }
+        if (!m_encoder)
+        {
+            
+            m_encoder = new dsp::crockchip_encoder();
+            RK_U32 width = mpp_frame_get_width(frame);
+            RK_U32 height = mpp_frame_get_height(frame);
+            MppFrameFormat fmt = mpp_frame_get_fmt(frame);
+            m_param.width = width;
+            m_param.height = height;
+            m_param.fmt = 0;// fmt; //VDPP_FMT_NV12
+            m_encoder->init((MppCodingType)m_param.type, m_param);
+            m_encoder->set_encoder(callback);
+        }
+        m_encoder->push(frame, pts);
+        return true;
+    }
+#else
+        
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
 } // namespace chen
 
  

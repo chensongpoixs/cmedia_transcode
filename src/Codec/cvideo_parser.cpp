@@ -8,6 +8,7 @@ purpose:		nv_cuda_ decoder
  #include "cvideo_parser.h"
 //#include <opencv2/imgproc.hpp>
 //#include <opencv2/highgui.hpp>
+#ifdef _MSC_VER
 #include <nvcuvid.h>
 #include "Util/logger.h"
 namespace dsp {
@@ -217,3 +218,4 @@ namespace dsp {
         return true;
 	}
 }
+#endif // #ifdef _MSC_VER

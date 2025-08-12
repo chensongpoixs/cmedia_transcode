@@ -7,6 +7,9 @@ purpose:		nv_cuda_ decoder
 ************************************************************************************************/
 #define NOMINMAX
 #include "cvideo_writer.h"
+
+#ifdef _MSC_VER
+
 #include <ostream>
 #include <fstream>
 #include <cassert>
@@ -370,3 +373,6 @@ namespace dsp
 
 
 }
+
+
+#endif // #ifdef _MSC_VER

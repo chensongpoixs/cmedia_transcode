@@ -8,7 +8,7 @@ purpose:		nv_cuda_ decoder
 
 #include "NvEncoder.h"
 
- 
+ #ifdef _MSC_VER
 
 NvEncoder::NvEncoder(NV_ENC_DEVICE_TYPE eDeviceType, void* pDevice, uint32_t nWidth, uint32_t nHeight, NV_ENC_BUFFER_FORMAT eBufferFormat,
     uint32_t nExtraOutputDelay) :
@@ -804,4 +804,4 @@ void NvEncoder::DestroyBitstreamBuffer()
     m_vBitstreamOutputBuffer.clear();
 }
  
- 
+ #endif // #ifdef _MSC_VER

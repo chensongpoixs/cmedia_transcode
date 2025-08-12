@@ -10,6 +10,7 @@ purpose:		nv_cuda_ decoder
 #ifndef C_NVENCODER_HPP
 #define C_NVENCODER_HPP
 #include <vector>
+#ifdef _MSC_VER
 #include "nvEncodeAPI.h"
 #include <stdint.h>
 #include <mutex>
@@ -388,5 +389,5 @@ private:
     uint32_t m_nExtraOutputDelay = 3; // To ensure encode and graphics can work in parallel, m_nExtraOutputDelay should be set to at least 1
     std::vector<NV_ENC_OUTPUT_PTR> m_vBitstreamOutputBuffer;
 };
- 
+#endif //  #ifdef _MSC_VER
 #endif

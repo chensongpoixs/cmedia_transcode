@@ -30,7 +30,7 @@ purpose:		nv_cuda_ decoder
 #define SOCKET int
 #define INVALID_SOCKET -1
 #endif
-
+	#ifdef _MSC_VER
 enum LogLevel {
     TRACE,
     INFO,
@@ -236,3 +236,4 @@ private:
 
 //extern simplelogger::Logger *logger__;
 #define LOG(level) simplelogger::LogTransaction(NULL, level, __FILE__, __LINE__, __FUNCTION__).GetStream()
+#endif 

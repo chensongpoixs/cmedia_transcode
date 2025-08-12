@@ -11,6 +11,7 @@ purpose:		nv_cuda_ decoder
 #include <queue>
 #include <vector>
 #include <mutex>
+#ifdef _MSC_VER
 #include <nvcuvid.h>
 #include <opencv2/cudacodec.hpp>
 #include "NvEncoderCuda.h"
@@ -84,5 +85,5 @@ namespace  dsp
     };
 
 }
-
+#endif // #ifdef _MSC_VER
 #endif // _C_VIDEO_WRITER_H_

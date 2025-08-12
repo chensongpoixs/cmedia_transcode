@@ -11,7 +11,7 @@ purpose:		nv_cuda_ decoder
 #include "NvEncoderCuda.h"
 #include "ccuda_define.h"
 #include "Util/logger.h"
- 
+ #ifdef _MSC_VER
 NvEncoderCuda::NvEncoderCuda(CUcontext cuContext, uint32_t nWidth, uint32_t nHeight, NV_ENC_BUFFER_FORMAT eBufferFormat,
     uint32_t nExtraOutputDelay) :
     NvEncoder(NV_ENC_DEVICE_TYPE_CUDA, cuContext, nWidth, nHeight, eBufferFormat, nExtraOutputDelay),
@@ -199,4 +199,4 @@ void NvEncoderCuda::CopyToDeviceFrame(CUcontext device,
     cudaSafeCall(cuCtxPopCurrent(NULL));
 }
  
- 
+ #endif // #ifdef _MSC_VER

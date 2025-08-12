@@ -8,10 +8,18 @@ purpose:		nv_cuda_ decoder
 
 #ifndef _C_CUDA_DEFINE_H_
 #define _C_CUDA_DEFINE_H_
+
+
+
+#ifdef _MSC_VER
+#include <io.h>
+#include <direct.h>
+
 #include <cuda.h>
 #include <iostream>
 #include <opencv2/cudacodec.hpp>
 #include <nvcuvid.h>
+#include <opencv2/cudacodec.hpp>
 namespace  dsp
 {
     
@@ -79,5 +87,12 @@ static inline void checkCuda_DriverApiError(int code, const char* file, const ch
     }
 }
 #define   cudaSafeCall(expr)   checkCuda_DriverApiError(expr, __FILE__, __FUNCTION__, __LINE__)
-
+#elif defined(__GNUC__)
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#else
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+#endif
 #endif // _C_VIDEO_PARSER_H_

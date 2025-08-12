@@ -5,7 +5,7 @@ author:			chensong
 
 purpose:		nv_cuda_ decoder
 ************************************************************************************************/
-
+#ifdef _MSC_VER
 
 #pragma once
 
@@ -233,3 +233,4 @@ private:
     bool m_bReconfigExternal = false;
     bool m_bReconfigExtPPChange = false;
 };
+#endif // #ifdef _MSC_VER
