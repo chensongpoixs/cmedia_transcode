@@ -1,14 +1,31 @@
-# 媒体服务转码版本GPU（cuda） 支持H264与H265转码
+# 媒体服务转码版本GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP） 支持H264与H265转码
 
-
-
-```
-
-./ffmpeg -rtsp_transport tcp  -c:v h264 -i "rtsp://admin:hik12345@192.168.1.4:554/H264/ch1/main/av_stream" -c:v libx264  -b:v 2M -maxrate 1M -bufsize 4M -s 1920x1080 -c:a aac -b:a 128k -f flv   rtmp://192.168.31.113/live/test1
  
-./ffmpeg -rtsp_transport tcp  -c:v h264 -i "rtsp://admin:hik12345@192.168.1.4:554/H264/ch1/main/av_stream"   -vcodec copy  -f flv   rtmp://192.168.31.113:11935/live/test1
+ 
+1. 视频间任意转码的GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP）
+2. 基于http api的动态增减转码，支持设置比特率，分辨率倍数，codec类型、滤镜等参数
+3. 支持全GPU硬件编解码与滤镜，防止显存与内存频繁拷贝
+4. 支持视频全GPU(CUDA/NPU)推理插件，支持人员、车辆等目标AI识别，支持目标跟踪 
 
 
 
-./ffmpeg -rtsp_transport tcp  -c:v h264 -i "rtsp://192.168.31.16:8554/live/11"  -vcodec  copy -f flv   rtmp://192.168.31.113/live/test2
+
+api接口:
+
+```javascript 
+
+curl -X 'GET' \
+  'http://127.0.0.1/index/api/set_transcode_info?secret=FTRaFEWs08KeTxKEEO25ePDKuV3CjOqp&app=live&stream=test1&out_width=1920&out_height=1920&out_codec=0&out_control_mode=0&out_average_bitrate=1000&out_max_bitrate=1000&out_gop=250&out_i_qp=28&out_p_qp=35' \
+  -H 'accept: application/json'
+  
+  
+  
+
 ```
+
+
+接口参数:
+
+ ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/6a4032e26093416e81a02a06ea49641c.png#pic_center)
+
+
