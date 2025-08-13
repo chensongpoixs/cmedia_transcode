@@ -10,6 +10,7 @@ purpose:		_C_ROCKCHIP_DECDER_H_
 namespace dsp
 {
 #define MPP_ALIGN(x, a)         (((x)+(a)-1)&~((a)-1))
+
 	bool crockchip_encoder::init(MppCodingType coding_type, video_info_param param)
 	{
 		MPP_RET  ret = MPP_SUCCESS;
@@ -100,6 +101,21 @@ namespace dsp
 		m_thread = std::thread(&crockchip_encoder::_work_thread, this);
 		return true;
 	}
+	void crockchip_encoder::destroy()
+	{
+		m_stoped = true;
+		{
+			m_condition.notify_all();
+		}
+
+	}
+	void crockchip_encoder::stop()
+	{
+		m_stoped = true;
+		{
+			m_condition.notify_all();
+		}
+	}
 	bool crockchip_encoder::push(MppFrame &frame, int64_t  pts)
 	{
 		if (m_stoped)
@@ -111,6 +127,9 @@ namespace dsp
 		if (ret == 0)
 		{
 			++m_frame;
+		}
+		{
+			m_condition.notify_one();
 		}
 		return false;
 	}
@@ -451,7 +470,5 @@ namespace dsp
 	}
 }
 
-#else
-// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+ 
 #endif

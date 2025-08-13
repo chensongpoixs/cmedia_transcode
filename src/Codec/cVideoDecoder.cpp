@@ -147,7 +147,7 @@ namespace mediakit {
 #elif defined(__GNUC__)
         if (m_rockchip_video_render)
         {
-            //m_rockchip_video_render
+            //m_rockchip_video_renderdestroy();
         }
 #else
 

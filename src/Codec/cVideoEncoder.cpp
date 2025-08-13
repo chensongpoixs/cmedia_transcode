@@ -443,6 +443,17 @@ return false;
 
     void cVideoEncoder::destroy()
     {
+#ifdef __GNUC__
+
+        if (m_encoder)
+        {
+            m_encoder->stop();
+            m_encoder->destroy();
+            delete m_encoder;
+            m_encoder = NULL;
+    }
+
+#endif 
     }
 
 

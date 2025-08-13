@@ -87,6 +87,13 @@ namespace dsp
 		bool init(MppCodingType  type, video_info_param param);
 
 
+		void destroy();
+
+		void stop();
+	public:
+
+
+
 		void set_encoder(EncoderCallback* callback) { m_callback = callback; }
 		bool push(MppFrame &frame, int64_t  pts);
 	private:
@@ -136,8 +143,6 @@ namespace dsp
 	};
 
 }
-#else
-// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ô¼ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-#error unexpected c complier (msc/gcc), Need to implement this method for demangle
+
 #endif
 #endif // 
