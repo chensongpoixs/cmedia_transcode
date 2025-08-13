@@ -13,7 +13,7 @@
 
 api接口参数:
 
- ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/6a4032e26093416e81a02a06ea49641c.png#pic_center)
+ ![api接口参数](image/transcode_api.png)
 
 
 ```javascript 
