@@ -1,6 +1,7 @@
 # 媒体服务转码版本GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP） 支持H264与H265转码
 
  
+## 一、功能说明
  
 1. 视频间任意转码的GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP）
 2. 基于http api的动态增减转码，支持设置比特率，分辨率倍数，codec类型、滤镜等参数
@@ -8,9 +9,12 @@
 4. 支持视频全GPU(CUDA/NPU)推理插件，支持人员、车辆等目标AI识别，支持目标跟踪 
 
 
+## 二、接口调用参数说明
 
+api接口参数:
 
-api接口:
+ ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/6a4032e26093416e81a02a06ea49641c.png#pic_center)
+
 
 ```javascript 
 
@@ -24,8 +28,5 @@ curl -X 'GET' \
 ```
 
 
-接口参数:
-
- ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/6a4032e26093416e81a02a06ea49641c.png#pic_center)
 
 
