@@ -1,4 +1,4 @@
-# 媒体服务转码版本GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP） 支持H264与H265转码
+# 媒体服务转码版本GPU加速转码（NVENC/NVDEC/CUDA/瑞芯微/海思MPP） 支持H264、H265与AV1转码
 
  
 ## 一、功能说明
